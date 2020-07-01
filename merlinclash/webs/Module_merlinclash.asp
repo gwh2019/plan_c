@@ -1064,7 +1064,11 @@ function getkcpConfigs() {
 			setTimeout("merlinclash.checkIP();", 10000);
 		},
 	}
-	</script>
+function menu_hook(title, tab) {
+	tabtitle[tabtitle.length -1] = new Array("", "软件中心", "离线安装", "Merlin Clash");
+	tablink[tablink.length -1] = new Array("", "Main_Soft_center.asp", "Main_Soft_setting.asp", "Module_merlinclash.asp");
+}
+</script>
 </head>
 <body onload="init();">
 <div id="TopBanner"></div>

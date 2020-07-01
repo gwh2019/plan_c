@@ -1,2 +1,2 @@
 c7a56c0db0681ca087ac94fbb03330d8 merlinclash_06.22.beta1.tar.gz
-58bc5430e02bd3ce3370b273da44696e merlinclash_06.26.beta1.tar.gz
+b74cfe390fcefdd86095ee0ac3390ccc merlinclash_06.26.beta1.tar.gz

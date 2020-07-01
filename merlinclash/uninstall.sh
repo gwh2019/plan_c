@@ -18,7 +18,6 @@ rm -rf /jffs/softcenter/res/icon-merlinclash.png
 rm -rf /jffs/softcenter/res/merlinclash.css
 rm -rf /jffs/softcenter/res/mc-tablednd.js
 rm -rf /jffs/softcenter/res/mc-menu.js
-rm -rf /jffs/softcenter/res/clash-kcp.jpg
 rm -rf /jffs/softcenter/merlinclash/Country.mmdb
 rm -rf /jffs/softcenter/merlinclash/clashconfig.sh
 rm -rf /jffs/softcenter/merlinclash/yaml_bak/*

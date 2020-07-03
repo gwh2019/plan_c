@@ -273,7 +273,7 @@ function get_online_yaml(action) {
 	dbus_post["merlinclash_links"] = db_merlinclash["merlinclash_links"] = (E("merlinclash_links").value);
 	dbus_post["merlinclash_uploadrename"] = db_merlinclash["merlinclash_uploadrename"] = (E("merlinclash_uploadrename").value);
 	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
-	push_data("clash_online_yaml.sh", action,  dbus_post);
+	push_data("clash_online_yaml.sh", "restart",  dbus_post);
 	
 }
 function get_online_yaml2(action) {
@@ -285,14 +285,14 @@ function get_online_yaml2(action) {
 		dbus_post["merlinclash_links2"] = db_merlinclash["merlinclash_links2"] = (E("merlinclash_links2").value);
 		dbus_post["merlinclash_uploadrename2"] = db_merlinclash["merlinclash_uploadrename2"] = (E("merlinclash_uploadrename2").value);
 		dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
-		push_data("clash_online_yaml2.sh", action,  dbus_post);
+		push_data("clash_online_yaml2.sh", "restart",  dbus_post);
 		
 }
 function ssconvert(action) {
 	var dbus_post = {};
 	dbus_post["merlinclash_uploadrename3"] = db_merlinclash["merlinclash_uploadrename3"] = (E("merlinclash_uploadrename3").value);
 	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
-	push_data("clash_online_yaml3.sh", action,  dbus_post);
+	push_data("clash_online_yaml3.sh", "restart",  dbus_post);
 }
 function del_yaml_sel(action) {
 	var dbus_post = {};
@@ -306,7 +306,7 @@ function del_yaml_sel(action) {
 	}
 	dbus_post["merlinclash_delyamlsel"] = db_merlinclash["merlinclash_delyamlsel"] = (E("merlinclash_delyamlsel").value);
 	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = "4"
-	push_data("clash_delyamlsel.sh", action, dbus_post);
+	push_data("clash_delyamlsel.sh", "clean", dbus_post);
 	//yaml_select();
 }
 function download_yaml_sel() {
@@ -526,7 +526,7 @@ function geoip_update(action){
 		}, function(index) {
 			$("#log_content3").attr("rows", "20");
 			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
-			push_data("clash_update_ipdb.sh", action, dbus_post);
+			push_data("clash_update_ipdb.sh", "start", dbus_post);
 			layer.close(index);
 			return true;
 		}, function(index) {

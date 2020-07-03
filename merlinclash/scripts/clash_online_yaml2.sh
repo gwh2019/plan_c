@@ -528,7 +528,7 @@ unset_lock(){
 }
 
 case $1 in
-2)
+restart)
 	set_lock
 	echo "" > $LOG_FILE
 	echo_date "订阅链接处理" >> $LOG_FILE

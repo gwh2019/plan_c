@@ -245,7 +245,7 @@ unset_lock(){
 }
 
 case $1 in
-6)
+restart)
 	set_lock
 	echo_date "飞机节点一键转换" > $LOG_FILE
 	get_ss_rule_now >> $LOG_FILE

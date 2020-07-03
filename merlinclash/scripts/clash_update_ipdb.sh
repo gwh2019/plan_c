@@ -28,7 +28,7 @@ unset_lock(){
 }
 
 case $1 in
-5)
+start)
 	set_lock
 	echo "" > $LOG_FILE
 	echo_date "数据库更新" >> $LOG_FILE

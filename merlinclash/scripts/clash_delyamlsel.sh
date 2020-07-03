@@ -28,7 +28,7 @@ start_online_del(){
     echo_date "配置文件删除完毕" >>"$LOG_FILE"
 }
 case $1 in
-0)
+clean)
 	set_lock
 	echo "" > $LOG_FILE
 	echo_date "删除配置文件" >> $LOG_FILE

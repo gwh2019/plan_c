@@ -1,0 +1,25 @@
+port: 3333
+socks-port: 23456
+redir-port: 23457
+allow-lan: true
+mode: Rule
+log-level: error
+external-controller: 192.168.2.1:9990
+experimental:
+  ignore-resolve-fail: true
+hosts:
+  router.asus.com: 192.168.2.1
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:23453
+  enhanced-mode: redir-host
+  nameserver:
+    - 114.114.114.114
+    - 223.5.5.5
+    - tls://dns.rubyfish.cn:853
+  fallback:
+    - 114.114.114.114
+    - tls://dns.rubyfish.cn:853
+    - 8.8.8.8
+proxies:

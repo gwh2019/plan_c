@@ -442,9 +442,10 @@ function getradioval() {
 }
 
 function clear_yaml() {
-	var id = parseInt(Math.random() * 100000000);
-	var postData = {"id": id, "method": "clash_clearyaml.sh", "params":[], "fields": ""};
-	dbus_post["action_script"] = "clash_downyamlsel.sh";
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_clearyaml.sh", "params":[], "fields": ""};
+	var dbus_post = {};
+	dbus_post["action_script"] = "clash_clearyaml.sh";
 	dbus_post["action_mode"] = " Refresh ";
 	$.ajax({
 		type: "POST",

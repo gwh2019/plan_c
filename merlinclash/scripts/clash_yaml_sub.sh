@@ -10,7 +10,7 @@ fp=/jffs/softcenter/merlinclash/yaml_bak
 
 name=$(find $uploadpath  -name "*.yaml" |sed 's#.*/##')
 #echo_date "yaml文件名是：$name" >> $LOG_FILE
-yaml_tmp=/tmp/upload/$name
+yaml_tmp=/tmp/$name
 #echo_date "yaml_tmp路径是：$yaml_tmp" >> $LOG_FILE
 head_tmp=/tmp/head.yaml
 
@@ -87,7 +87,7 @@ fi
 echo_date "移动yaml文件到/jffs/softcenter/merlinclash/yaml_bak/ 目录下" >> $LOG_FILE
 mv -f $yaml_tmp /jffs/softcenter/merlinclash/yaml_bak/$name
 cp -rf /jffs/softcenter/merlinclash/yaml_bak/$name /jffs/softcenter/merlinclash/$name
-#删除/upload可能残留的yaml格式文件
+#删除可能残留的yaml格式文件
 rm -rf /tmp/*.yaml
 #生成新的txt文件
 

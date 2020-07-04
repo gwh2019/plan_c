@@ -42,7 +42,7 @@ check_status() {
 
 if [ "$merlinclash_enable" == "1" ]; then
 	check_status >/tmp/clash_proc_status.txt 2>&1
-	#echo XU6J03M6 >> /tmp/upload/ss_proc_status.txt
+	#echo XU6J03M6 >> /tmp/ss_proc_status.txt
 else
 	echo 插件尚未启用！ >/tmp/clash_proc_status.txt 2>&1
 fi

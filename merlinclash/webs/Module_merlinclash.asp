@@ -330,7 +330,7 @@ function download_yaml_sel() {
 		data: $.param(dbus_post),
 		dataType: "text",
 		success: function(response) {
-			yamlname = dbus_post["merlinclash_delyamlsel"] + ".yaml";
+			yamlname = dbus_post["merlinclash_delyamlsel"] + ".json";
 			//alert(yamlname);
 			download(yamlname);
 		}
@@ -342,7 +342,7 @@ function download(yamlname) {
 	var a = "http://"+window.location.hostname+"/ext/"+yamlname
 	var blob = new Blob([JSON.stringify(josnData)],{type : 'application/json'});
 	downloadA.href = a;
-	downloadA.download = yamlname;
+	downloadA.download = db_merlinclash["merlinclash_delyamlsel"] + ".yaml";
 	downloadA.click();
 	window.URL.revokeObjectURL(downloadA.href);
 }

@@ -8,6 +8,7 @@ HOME_URL=Module_merlinclash.asp
 arch_list="mips mipsle arm armng arm64"
 #yq:https://github.com/mikefarah/yq/releases
 #clash:https://github.com/Dreamacro/clash/releases
+#clashr:https://github.com/BROBIRD/clash/releases
 #kcp:https://github.com/xtaci/kcptun/releases
 
 do_build() {

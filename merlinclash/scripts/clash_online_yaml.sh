@@ -15,21 +15,21 @@ upname_tmp=""
 start_online_update(){
 	merlinc_link=$merlinclash_links
 	LINK_FORMAT=$(echo "$merlinc_link" | grep -E "^http://|^https://")
-	upname_tmp=$merlinclash_uploadrename
-	echo_date "上传文件重命名为：$upname_tmp" >> $LOG_FILE
-	time=$(date "+%Y%m%d-%H%M%S")
-	newname=$(echo $time | awk -F'-' '{print $2}')
-	if [ -n "$upname_tmp" ]; then
-		upname=$upname_tmp.yaml
-	else
-		upname=$newname.yaml
-	fi
+	echo_date "订阅地址是：$LINK_FORMAT"
 	if [ -z "$LINK_FORMAT" ]; then
 		echo_date "订阅地址错误！检测到你输入的订阅地址并不是标准网址格式！"
 		sleep 2
 		echo_date "退出订阅程序" >> $LOG_FILE
-		unset_lock
 	else
+		upname_tmp=$merlinclash_uploadrename
+		echo_date "上传文件重命名为：$upname_tmp" >> $LOG_FILE
+		time=$(date "+%Y%m%d-%H%M%S")
+		newname=$(echo $time | awk -F'-' '{print $2}')
+		if [ -n "$upname_tmp" ]; then
+			upname=$upname_tmp.yaml
+		else
+			upname=$newname.yaml
+		fi
 		#echo_date merlinclash_link=$merlinc_link >> $LOG_FILE
 		#wget下载文件
 		wget --no-check-certificate -t3 -T30 -4 -O /tmp/$upname "$merlinc_link"
@@ -48,21 +48,18 @@ start_online_update(){
 			echo_date "下载订阅文件失败，请稍后再试，退出" >> $LOG_FILE
 		fi
 	fi
-
-	
-
 }
 check_yamlfile(){
 	#通过获取的文件是否存在port: Rule: Proxy: Proxy Group: 标题头确认合法性
 	para1=$(sed -n '/^port:/p' /tmp/$upname)
+	para1_1=$(sed -n '/^mixed-port:/p' /tmp/$upname)
 	para2=$(sed -n '/^socks-port:/p' /tmp/$upname)
 	para3=$(sed -n '/^mode:/p' /tmp/$upname)
 	#para4=$(sed -n '/^name:/p' /tmp/upload.yaml)
 	#para5=$(sed -n '/^type:/p' /tmp/upload.yaml)
-	if [ ! -n "$para1" ] || [ ! -n "$para2" ] || [ ! -n "$para3" ]; then
+	if ([ ! -n "$para1" ] && [ ! -n "$para1_1" ]) && [ ! -n "$para2" ]; then
 		echo_date "获取的文件不是合法的yaml文件，请检查订阅连接是否有误" >> $LOG_FILE
 		rm -rf /tmp/$upname
-		unset_lock
 	else
 		echo_date "获取的文件检查通过" >> $LOG_FILE
 		flag=1

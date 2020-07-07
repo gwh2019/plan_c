@@ -12,6 +12,7 @@ chromecast_nu=""
 lan_ipaddr=$(nvram get lan_ipaddr)
 ssh_port=$(nvram get sshd_port)
 dem=$(yq r $yamlpath dns.enhanced-mode)
+head_tmp=/jffs/softcenter/merlinclash/yaml/head.yaml
 
 uploadpath=/tmp/
 set_lock() {
@@ -169,8 +170,10 @@ check_rule() {
 			lianjie=$(eval echo \$merlinclash_acl_lianjie_$acl)
 			#写入自定规则到当前配置文件
 			num1=$(($num+1))
+			rules_line=$(sed -n -e '/^rules:/=' $yamlpath)
 			echo_date "写入第$num1条自定规则到当前配置文件" >> $LOG_FILE
-			yq w -i $yamlpath "rules[$num]" "$type","$content","$lianjie"
+			#yq w -i $yamlpath "rules[$num]" "$type","$content","$lianjie"
+			sed "$rules_line a \ \ -\ $type,$content,$lianjie" -i $yamlpath
 			let num++
 		done
 	else
@@ -340,54 +343,153 @@ apply_nat_rules3() {
 
 		#redirect to Clash
 		iptables -t nat -A merlinclash -p tcp -j REDIRECT --to-ports $proxy_port
-		iptables -t nat -A PREROUTING -j merlinclash
+		iptables -t nat -A PREROUTING -p tcp -j merlinclash
 		# fake-ip rules
-		iptables -t nat -A OUTPUT -p tcp -d 198.18.0.0/16 -j REDIRECT --to-ports $proxy_port
-
+		#iptables -t nat -A OUTPUT -p tcp -d 198.18.0.0/16 -j REDIRECT --to-ports $proxy_port
 		#DNS
 		iptables -t nat -A PREROUTING -p udp -m udp --dport 53 -j DNAT --to-destination $lan_ipaddr:23453			
 	fi
 
-#	if [ "$merlinclash_udpr" == "1" ]; then
-#		echo_date "检测到开启udp转发，将创建相关iptable规则" >> $LOG_FILE
-#		# udp
-#		load_tproxy
-#		ip rule add fwmark 0x07 table 310
-#		ip route add local 0.0.0.0/0 dev lo table 310
-#		iptables -t mangle -N merlinclash
-#		iptables -t mangle -N merlinclash_GAM
-#		iptables -t mangle -A merlinclash_GAM -p udp -j TPROXY --on-port 3333 --tproxy-mark 0x07
-#		iptables -t mangle -A merlinclash -p udp -j merlinclash_GAM
-#		iptables -t mangle -A PREROUTING -p udp -j merlinclash
-#	else
-#		echo_date "检测到udp转发未开启，进行下一步" >> $LOG_FILE
+	if [ "$merlinclash_udpr" == "1" ]; then
+		echo_date "检测到开启udp转发，将创建相关iptable规则" >> $LOG_FILE
+		# udp
+		load_tproxy
+		ip rule add fwmark 0x07 table 310
+		ip route add local 0.0.0.0/0 dev lo table 310
+		iptables -t mangle -N merlinclash
+		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -j RETURN
+		iptables -t mangle -A merlinclash -d 10.0.0.0/8 -j RETURN
+		iptables -t mangle -A merlinclash -d 0.0.0.0/8 -j RETURN
+		iptables -t mangle -A merlinclash -d 127.0.0.0/8 -j RETURN
+		iptables -t mangle -A merlinclash -d 169.254.0.0/16 -j RETURN
+		iptables -t mangle -A merlinclash -d 172.16.0.0/12 -j RETURN
+		iptables -t mangle -A merlinclash -d 224.0.0.0/4 -j RETURN
+		iptables -t mangle -A merlinclash -d 240.0.0.0/4 -j RETURN
+		iptables -t mangle -N merlinclash_GAM
+		iptables -t mangle -A merlinclash_GAM -p udp -j TPROXY --on-port 3333 --tproxy-mark 0x07
+		iptables -t mangle -A merlinclash -p udp -j merlinclash_GAM
+		iptables -t mangle -A PREROUTING -p udp -j merlinclash
+	else
+		echo_date "检测到udp转发未开启，进行下一步" >> $LOG_FILE
 
-#	fi
+	fi
 
 	echo_date "iptable规则创建完成" >> $LOG_FILE
 }
 restart_dnsmasq() {
     # Restart dnsmasq
     echo_date "重启 dnsmasq..." >> $LOG_FILE
-    service restart_dnsmasq restart >/dev/null 2>&1
+    service restart_dnsmasq >/dev/null 2>&1
 }
 start_clash(){
 	echo_date "启用$yamlname YAML配置" >> $LOG_FILE
-	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>&1 &
+	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>/tmp/clash_error.log &
+	#检查clash进程
+	sleep 5s
+	pid_clash=$(pidof clash)
+	if [ -n "$pid_clash" ]; then
+		echo_date "Clash 进程启动成功！(PID: $pid_clash)"
+		#复制文件到/tmp/upload/，且重命名为view.yaml
+		rm -rf /tmp/upload/*.yaml
+		#cp -rf $yamlpath /tmp/view.txt 
+		ln -sf $yamlpath /tmp/view.txt 
+	else
+		echo_date "Clash 进程启动失败！请检查配置文件是否存在问题，即将退出"
+		echo_date "失败原因："
+		b=$(cat /tmp/clash_error.log)
+    	echo_date $b >> $LOG_FILE
+		close_in_five
+	fi
 }
 
 check_yaml(){
+	#配合自定规则，此处修改为每次都从BAK恢复原版文件来操作-20200629
+	#每次从/jffs/softcenter/merlinclash/yaml 复制一份上传的 上传文件名.yaml 使用
+	echo_date "从yaml_bak恢复初始文件" >> $LOG_FILE
+	cp -rf /jffs/softcenter/merlinclash/yaml_bak/$yamlname.yaml $yamlpath
 	if [ -f $yamlpath ]; then
-    echo_date "检查到Clash配置文件存在！选中的配置文件是【$yamlname】,Clash启动中.." >> $LOG_FILE
+		echo_date "检查到Clash配置文件存在！选中的配置文件是【$yamlname】" >> $LOG_FILE
+		#echo_date "将标准头部文件复制一份到/tmp/" >>"$LOG_FILE"
+		#cp -rf /jffs/softcenter/merlinclash/yaml/head.yaml /tmp/head.yaml >/dev/null 2>&1 &
+		sleep 2s
+		#去注释
+		echo_date "文件格式标准化" >>"$LOG_FILE"
+		#sed -i 's/#.*//' $yamlpath
+		#将所有DNS都转化成dns
+		sed -i 's/DNS/dns/g' $yamlpath
+		#老标题更新成新标题
+		#当文件存在Proxy:开头的行数，将Proxy: ~替换成proxies: ~并删除
+		para1=$(sed -n '/^Proxy:/p' $yamlpath)
+		if [ -n "$para1" ] ; then
+			echo_date "将Proxy:替换成proxies:" >> $LOG_FILE
+			sed -i 's/Proxy:/proxies:/g' $yamlpath
+		fi
+		sed -i 's/proxies: ~//g' $yamlpath
 
-	# 确保启用 DNS
-    yq w -i $yamlpath dns.enable "true"
-	#sed -i 's/enable: '$de'/enable: true /g' /jffs/softcenter/merlinclash/上传文件名.yaml
-	# 修改dns监听端口为23453
-    yq w -i $yamlpath.yaml dns.listen "0.0.0.0:23453"
-	#sed -i 's/listen: '$dl'/listen: 0.0.0.0:23453 /g' /jffs/softcenter/merlinclash/上传文件名.yaml
+		para2=$(sed -n '/^Proxy Group:/p' $yamlpath)
+		#当文件存在Proxy Group:开头的行数，将Proxy Group: ~替换成proxy-groups: ~并删除
+		if [ -n "$para2" ] ; then
+			echo_date "将Proxy Group:替换成proxy-groups:" >> $LOG_FILE
+			sed -i 's/Proxy Group:/proxy-groups:/g' $yamlpath
+		fi
+		sed -i 's/proxy-groups: ~//g' $yamlpath
 
-	#echo_date "判断是否存在 DNS 字段、DNS 是否启用、DNS 是否使用 redir-host / fake-ip 模式"
+		para3=$(sed -n '/^Rule:/p' $yamlpath)
+		#当文件存在Rule:开头的行数，将Rule: ~替换成rules: ~并删除
+		if [ -n "$para3" ] ; then
+			echo_date "将Rule:替换成rules:" >> $LOG_FILE
+			sed -i 's/Rule:/rules:/g' $yamlpath
+		fi
+		sed -i 's/rules: ~//g' $yamlpath
+		#去空白行
+		sed -i '/^ *$/d' $yamlpath
+		#删除文件自带的port、socks-port、redir-port、allow-lan、mode、log-level、external-controller、experimental段
+		echo_date "删除配置文件头并与标准文件头拼接" >> $LOG_FILE 
+		yq d  -i $yamlpath port
+		yq d  -i $yamlpath socks-port
+		yq d  -i $yamlpath redir-port
+		yq d  -i $yamlpath allow-lan
+		yq d  -i $yamlpath mode
+		yq d  -i $yamlpath log-level
+		yq d  -i $yamlpath external-controller
+		yq d  -i $yamlpath experimental
+
+		#至此，.yaml将是从dns:开始，头部在后，减少合并时间接下来进行合并
+		#yq m -x -i $yamlpath $head_tmp
+		cat $head_tmp >> $yamlpath
+		echo_date "标准头文件合并完毕" >> $LOG_FILE
+		#对external-controller赋值
+		yq w -i $yamlpath external-controller $lan_ipaddr:9990
+		#写入hosts
+		yq w -i $yamlpath 'hosts.[router.asus.com]' "$lan_ipaddr"
+		# 确保启用 DNS
+ 		yq w -i $yamlpath dns.enable "true"
+		#sed -i 's/enable: '$de'/enable: true /g' /jffs/softcenter/merlinclash/上传文件名.yaml
+		# 修改dns监听端口为23453
+    		yq w -i $yamlpath dns.listen "0.0.0.0:23453"
+		#sed -i 's/listen: '$dl'/listen: 0.0.0.0:23453 /g' /jffs/softcenter/merlinclash/上传文件名.yaml
+		#echo_date "判断是否存在 port字段、socks-port、redir-port、allow-lan等"
+		yq r $yamlpath port 1>/dev/null 2>/tmp/clash_error.log
+		error=$(sed -n 1p /tmp/clash_error.log | awk -F':' '{print $1}')
+		if [ $error == "Error" ]; then
+			echo_date "yq 发生异常，yaml文件可能存在格式问题，即将退出！" >> $LOG_FILE
+			echo_date "以下是错误原因：" >> $LOG_FILE
+			b=$(cat /tmp/clash_error.log)
+			echo_date $b >> $LOG_FILE
+			echo_date "...MerlinClash！退出中..." >> $LOG_FILE
+			close_in_five
+		fi
+		if [ $(yq r $yamlpath port) != '' ] && [ $(yq r $yamlpath socks-port) != '' ] && [ $(yq r $yamlpath redir-port) != '' ] && [ $(yq r $yamlpath allow-lan) != '' ] && [ $(yq r $yamlpath mode) != '' ] && [ $(yq r $yamlpath log-level) != '' ] && [ $(yq r $yamlpath external-controller) != '' ] ; then
+
+			echo_date "Clash 文件头正常！" >> $LOG_FILE
+		else
+			echo_date "Clash文件头必要字段缺失，请检查port、socks-port、redir-port、allow-lan、" >> $LOG_FILE
+			echo_date "mode、log-level、external-controller等字段是否有值" >> $LOG_FILE
+			#dbus set $merlinclash_dnsplan="de"
+			echo_date "...MerlinClash！退出中..." >> $LOG_FILE
+			close_in_five
+		fi
+		#echo_date "判断是否存在 DNS 字段、DNS 是否启用、DNS 是否使用 redir-host / fake-ip 模式"
 		if [ $(yq r $yamlpath dns.enable) == 'true' ] && ([[ $dem == 'fake-ip' || $dem == 'redir-host' ]]); then
 
 			echo_date "Clash 配置文件DNS可用！"
@@ -432,10 +534,7 @@ get_lan_cidr() {
 
 
 check_dnsplan(){
-	#配合自定规则，此处修改为每次都从BAK恢复原版文件来操作-20200621
 	echo_date "当前dns方案是$merlinclash_dnsplan"
-	#每次从/jffs/softcenter/merlinclash/yaml 复制一份上传的 上传文件名.yaml 使用
-	cp -rf /jffs/softcenter/merlinclash/yaml_bak/$yamlname.yaml $yamlpath
 	case $merlinclash_dnsplan in
 de)
 	#默认方案
@@ -452,7 +551,8 @@ rh)
 	echo_date "删除Clash配置文件中原有的DNS配置"
     yq d -i $yamlpath dns
 	echo_date "将Redir-Host设置覆盖Clash配置文件..."
-	yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/redirhost.yaml
+	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/redirhost.yaml
+	cat /jffs/softcenter/merlinclash/yaml/redirhost.yaml >> $yamlpath
 	;;
 rhp)
 	#redir-host-plus方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 rhplus.yaml 合并
@@ -461,7 +561,8 @@ rhp)
 	echo_date "删除Clash配置文件中原有的DNS配置"
     yq d -i $yamlpath dns
 	echo_date "将Redir-Host-Plus设置覆盖Clash配置文件..."
-	yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/rhplus.yaml
+	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/rhplus.yaml
+	cat /jffs/softcenter/merlinclash/yaml/rhplus.yaml >> $yamlpath
 	;;
 fi)
 	#fake-ip方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 fakeip.yaml 合并
@@ -469,7 +570,8 @@ fi)
 	echo_date "删除Clash配置文件中原有的 DNS 配置"
     yq d -i $yamlpath dns
 	echo_date "将Fake-ip设置覆盖Clash配置文件..."
-	yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/fakeip.yaml
+	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/fakeip.yaml
+	cat /jffs/softcenter/merlinclash/yaml/fakeip.yaml >> $yamlpath
 	;;
 esac
 
@@ -484,17 +586,17 @@ esac
 
 }
 stop_config(){
-	echo_date 触发脚本stop_config
+	echo_date 触发脚本stop_config >> $LOG_FILE
 	#ss_pre_stop
 	# now stop first
-	echo_date ======================= MERLIN CLASH ========================
+	echo_date ======================= MERLIN CLASH ======================== >> $LOG_FILE
 	echo_date
-	echo_date --------------------------- 启动 ----------------------------
-	#stop_status
-	echo_date ---------------------- 结束相关进程--------------------------
+	echo_date --------------------------- 启动 ---------------------------- >> $LOG_FILE
+	#stop_status 
+	echo_date ---------------------- 结束相关进程-------------------------- >> $LOG_FILE
 	restart_dnsmasq
 	kill_process
-	echo_date -------------------- 相关进程结束完毕 -----------------------
+	echo_date -------------------- 相关进程结束完毕 -----------------------  >> $LOG_FILE
 	#echo_date --------------- 删除插件触发重启定时任务 -------------------
 	#remove_ss_trigger_job
 	#echo_date --------------------- 删除完毕 -----------------------------
@@ -510,36 +612,124 @@ stop_config(){
 	echo_date ----------------------清除iptables规则-----------------------
 	flush_nat
 }
-
+check_unblockneteasemusic(){
+	unm_process=$(pidof UnblockNeteaseMusic)
+	if [ "$merlinclash_enable" == "1" ] && [ "$merlinclash_nmswitch" == "1" ];then
+		echo_date "检测到开启网易云解锁功能，开始处理" >> $LOG_FILE	
+		#if [ -n "$unm_process" ]; then
+			#网易云解锁运行中，删除网易云的iptables
+		#	echo_date 移除网易云规则...
+		#	iptables -t nat -D PREROUTING -p tcp -m set --match-set music dst -j cloud_music 2>/dev/null
+		#	iptables -t nat -F cloud_music  2>/dev/null
+		#	iptables -t nat -X cloud_music  2>/dev/null			
+		#	rm -f /tmp/etc/dnsmasq.user/dnsmasq-music.conf			
+		
+			#获取proxies跟rules行号
+			proxy_line=$(sed -n -e '/^proxies:/=' $yamlpath)
+			rules_line=$(sed -n -e '/^rules:/=' $yamlpath)
+			ubm="\ \ - {name: "网易云解锁WINDOWS/ANDORID", server: music.desperadoj.com, port: 30001, type: ss, cipher: aes-128-gcm, password: desperadoj.com_free_proxy_x80j}"
+			ubm2="\ \ - {name: "网易云解锁MAC/IOS", server: music.desperadoj.com, port: 30003, type: ss, cipher: aes-128-gcm, password: desperadoj.com_free_proxy_x80j}"
+			#写入proxies
+			echo_date "写入网易云解锁的proxy跟proxy-group" >> $LOG_FILE
+			sed "$proxy_line a$ubm2" -i $yamlpath
+			sed "$proxy_line a$ubm" -i $yamlpath
+			#写入proxy-groups
+			pg1="\ \ - name: Netease Music"
+			pg2="\ \ \ \ type: select"
+			pg3="\ \ \ \ proxies:"
+			pg4="\ \ \ \ \ \ - 网易云解锁WINDOWS/ANDORID"
+			pg6="\ \ \ \ \ \ - 网易云解锁MAC/IOS"
+			pg5="\ \ \ \ \ \ - DIRECT"
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg1" -i $yamlpath
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg2" -i $yamlpath
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg3" -i $yamlpath
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg4" -i $yamlpath
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg6" -i $yamlpath
+			let rules_line=$rules_line+1
+			sed "$rules_line a$pg5" -i $yamlpath
+			#写入网易云的clash rule部分  格式:  - "DOMAIN-SUFFIX,acl4ssr,\U0001F3AF 全球直连"
+			
+			echo_date 写入网易云的clash rule部分 >> $LOG_FILE
+			rules_line=$(sed -n -e '/^rules:/=' $yamlpath)
+			sed "$rules_line a \ \ -\ IP-CIDR,223.252.199.67/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,223.252.199.66/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,193.112.159.225/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,118.24.63.156/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,115.236.121.1/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,115.236.118.33/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,112.13.122.1/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,112.13.119.17/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,103.126.92.133/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,103.126.92.132/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,101.71.154.241/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.238.29/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.181.35/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.160.197/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.160.195/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.181.60/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.181.38/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.179.214/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,59.111.21.14/31,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,47.100.127.239/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,45.254.48.1/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ IP-CIDR,39.105.63.80/32,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,hz.netease.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,mam.netease.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,interface3.music.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,interface.music.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,apm3.music.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,apm.music.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,api.iplay.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,music.126.net,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,music.163.com,Netease Music" -i $yamlpath
+			sed "$rules_line a \ \ -\ DOMAIN-SUFFIX,163yun.com,Netease Music" -i $yamlpath
+		#else
+		#	echo_date "路由当前并没有运行网易云解锁功能" >> $LOG_FILE
+		#fi
+	fi
+	#clash网易云功能没开启,但是路由有运行网易云,对网易云直接重启
+	#if [ "$merlinclash_enable" == "1" ] && [ "$merlinclash_nmswitch" != "1" ];then
+	#	if [ -n "$unm_process" ]; then
+	#		sh /koolshare/scripts/unblockmusic_config.sh restart >/dev/null 2>&1 &
+	#	fi
+	#fi
+}
 auto_start() {
 	echo_date "创建开机/iptable重启任务" >> $LOG_FILE
-	[ ! -L "/jffs/softcenter/init.d/S100merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/S99merlinclash.sh
-	[ ! -L "/jffs/softcenter/init.d/N100merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
+	[ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/S99merlinclash.sh
+	[ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
 }
 
 apply_mc() {
 	# router is on boot
 	WAN_ACTION=`ps|grep /jffs/scripts/wan-start|grep -v grep`
-	echo_date 触发脚本apply_mc
+	echo_date 触发脚本apply_mc >> $LOG_FILE
 	# now stop first
-	echo_date ======================= MERLIN CLASH ========================
-	echo_date --------------------- 检查是否存冲突插件 -----------------------
+	echo_date ======================= MERLIN CLASH ======================== >> $LOG_FILE
+	echo_date --------------------- 检查是否存冲突插件 ----------------------- >> $LOG_FILE
 	check_ss
-	echo_date ---------------------- 重启dnsmasq --------------------------
+	echo_date ---------------------- 重启dnsmasq -------------------------- >> $LOG_FILE
 	restart_dnsmasq
-	echo_date ----------------------- 结束相关进程---------------------------
+	echo_date ----------------------- 结束相关进程--------------------------- >> $LOG_FILE
 	kill_process
-	echo_date --------------------- 相关进程结束完毕 ------------------------
-	echo_date -------------------- 检查配置文件是否存在 ---------------------
+	echo_date --------------------- 相关进程结束完毕 ------------------------ >> $LOG_FILE
+	echo_date -------------------- 检查配置文件是否存在 --------------------- >> $LOG_FILE
 	check_yaml
-	echo_date ------------------------ 确认DNS方案 --------------------------
+	echo_date ------------------------ 确认DNS方案 -------------------------- >> $LOG_FILE
 	check_dnsplan
-	echo_date -------------------- 检查自定义规则 --------------------------
+	echo_date -------------------- 检查自定义规则 -------------------------- >> $LOG_FILE
 	check_rule
 	# 清除iptables规则和ipset...
-	echo_date --------------------- 清除iptables规则 ------------------------
+	echo_date --------------------- 清除iptables规则 ------------------------ >> $LOG_FILE
 	flush_nat
-	echo_date ---------------------- 启动插件相关功能 ------------------------
+	echo_date --------------------- 网易云功能检查 ------------------------ >> $LOG_FILE
+	check_unblockneteasemusic
+	echo_date ---------------------- 启动插件相关功能 ------------------------ >> $LOG_FILE
 	start_clash && echo_date "start_clash" >> $LOG_FILE
 	watchdog
 	#===load nat start===
@@ -550,18 +740,18 @@ apply_mc() {
 	#===load nat end===
 	# 创建开机/IPT重启任务！
 	auto_start
-    echo_date ""
-	echo_date "             ++++++++++++++++++++++++++++++++++++++++"
-    echo_date "             +        管理面板：$lan_ipaddr:9990     +"
-    echo_date "             +       Http代理：$lan_ipaddr:3333     +" 
-    echo_date "             +      Socks代理：$lan_ipaddr:23456    +" 
-    echo_date "             ++++++++++++++++++++++++++++++++++++++++"
-	echo_date ""
-    echo_date "                     恭喜！开启MerlinClash成功！"
-	echo_date ""
-	echo_date   如果不能科学上网，请刷新设备dns缓存，或者等待几分钟再尝试
-	echo_date ""
-	echo_date -------------- 【MERLIN CLASH】 启动完毕 ---------------------
+    echo_date "" >> $LOG_FILE
+	echo_date "             ++++++++++++++++++++++++++++++++++++++++" >> $LOG_FILE
+    echo_date "             +        管理面板：$lan_ipaddr:9990     +" >> $LOG_FILE
+    echo_date "             +       Http代理：$lan_ipaddr:3333     +"  >> $LOG_FILE
+    echo_date "             +      Socks代理：$lan_ipaddr:23456    +" >> $LOG_FILE
+    echo_date "             ++++++++++++++++++++++++++++++++++++++++" >> $LOG_FILE
+	echo_date "" >> $LOG_FILE
+    echo_date "                     恭喜！开启MerlinClash成功！" >> $LOG_FILE
+	echo_date "" >> $LOG_FILE
+	echo_date   "如果不能科学上网，请刷新设备dns缓存，或者等待几分钟再尝试" >> $LOG_FILE
+	echo_date "" >> $LOG_FILE
+	echo_date ==================== 【MERLIN CLASH】 启动完毕 ==================== >> $LOG_FILE
 }
 
 
@@ -570,9 +760,11 @@ start)
 	set_lock
 	if [ "$merlinclash_enable" == "1" ]; then
 		logger "[软件中心]: 启动MerlinClash插件！"
+		echo_date "[软件中心]: 启动MerlinClash插件！" >> $LOG_FILE
 		apply_mc >>"$LOG_FILE"
 	else
 		logger "[软件中心]: MerlinClash插件未开启，不启动！"
+		echo_date "[软件中心]: MerlinClash插件未开启，不启动！" >> $LOG_FILE
 	fi
 	unset_lock
 	;;
@@ -585,27 +777,33 @@ select)
 stop)
 	set_lock
 	stop_config
-	echo_date
-	echo_date 你已经成功关闭Merlin Clash~
-	echo_date See you again!
-	echo_date
-	echo_date ======================= Merlin Clash ========================
+	echo_date >> $LOG_FILE
+	echo_date 你已经成功关闭Merlin Clash~ >> $LOG_FILE
+	echo_date See you again! >> $LOG_FILE
+	echo_date >> $LOG_FILE
+	echo_date ======================= Merlin Clash ======================== >> $LOG_FILE
 	unset_lock
 	;;
 restart)
 	set_lock
 	apply_mc
-	echo_date
-	echo_date "Across the Great Wall we can reach every corner in the world!"
-	echo_date
-	echo_date ======================= Merlin Clash ========================
+	echo_date >> $LOG_FILE
+	echo_date "Across the Great Wall we can reach every corner in the world!" >> $LOG_FILE
+	echo_date >> $LOG_FILE
+	echo_date ======================= Merlin Clash ======================== >> $LOG_FILE
 	unset_lock
 	;;
 start_nat)
 	set_lock
 	if [ "$merlinclash_enable" == "1" ]; then
-		logger "[软件中心]: Merlin Clash nat重启！"
-		apply_mc
+		logger "[软件中心]: iptable发生变化，Merlin Clash nat重启！"
+		echo_date "============= Merlin Clash iptable 重写开始=============" >> $LOG_FILE
+		echo_date "[软件中心]: iptable发生变化，Merlin Clash nat重启！" >> $LOG_FILE
+		apply_nat_rules3
+		echo_date "============= Merlin Clash iptable 重写完成=============" >> $LOG_FILE
+	else
+		logger "[软件中心]: MerlinClash插件未开启，不启动！"
+		echo_date "[软件中心]: MerlinClash插件未开启，不启动！" >> $LOG_FILE
 	fi
 	unset_lock
 	;;

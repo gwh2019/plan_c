@@ -58,33 +58,31 @@ function get_dbus_data() {
 			E("merlinclash_watchdog").checked = db_merlinclash["merlinclash_watchdog"] == "1";
 			E("merlinclash_kcpswitch").checked = db_merlinclash["merlinclash_kcpswitch"] == "1";
 			E("merlinclash_ipv6switch").checked = db_merlinclash["merlinclash_ipv6switch"] == "1";
+			E("merlinclash_nmswitch").checked = db_merlinclash["merlinclash_nmswitch"] == "1";
 			//E("merlinclash_udpr").checked = db_merlinclash["merlinclash_udpr"] == "1";
-			E("merlinclash_links").value = db_merlinclash["merlinclash_links"];		
-			E("merlinclash_links2").value = db_merlinclash["merlinclash_links2"];		
-			if (E("merlinclash_links").value == "undefined"){
-				E("merlinclash_links").value = "";
+			if(db_merlinclash["merlinclash_links"]){					
+				E("merlinclash_links").value = db_merlinclash["merlinclash_links"];
 			}
-			if (E("merlinclash_links2").value == "undefined"){
-				E("merlinclash_links2").value = "";
+			if(db_merlinclash["merlinclash_links2"]){					
+				E("merlinclash_links2").value = db_merlinclash["merlinclash_links2"];
 			}
-			$("input:radio[name='dnsplan'][value="+db_merlinclash["merlinclash_dnsplan"]+"]").attr('checked','true');
+			if(db_merlinclash["merlinclash_links3"]){
+				var delinks2 = decodeURIComponent(db_merlinclash["merlinclash_links3"]);
+				E("merlinclash_links3").value = delinks2;
+			}
+			if(db_merlinclash["merlinclash_dnsplan"]){					
+				$("input:radio[name='dnsplan'][value="+db_merlinclash["merlinclash_dnsplan"]+"]").attr('checked','true');
+			}
+			//$("input:radio[name='dnsplan'][value="+db_merlinclash["merlinclash_dnsplan"]+"]").attr('checked','true');
 			//alert(db_merlinclash["merlinclash_yamlsel"]);
 			//E("merlinclash_yamlsel").value = db_merlinclash["merlinclash_yamlsel"];
-			var ysel = document.getElementById("merlinclash_yamlsel").value = db_merlinclash["merlinclash_yamlsel"]
-			//alert(ysel);
-			if ( ysel == null ){
-				$("#merlinclash_yamlsel").append("<option value=''>--请选择--</option>");
-				$("#merlinclash_yamlsel").append("<option value=''>--请选择--</option>").empty();
-				$("#merlinclash_delyamlsel").append("<option value=''>--请选择--</option>");
-				$("#merlinclash_delyamlsel").append("<option value=''>--请选择--</option>").empty();
-			}
-			else{	
-				$("#merlinclash_yamlsel").append("<option value=''>--请选择--</option>").empty();				
+			if(db_merlinclash["merlinclash_yamlsel"]){					
 				$("#merlinclash_yamlsel").append("<option value='"+db_merlinclash["merlinclash_yamlsel"]+"' >"+db_merlinclash["merlinclash_yamlsel"]+"</option>");
-			};			
+			
+			}			
 			toggle_func();
 			get_clash_status_front();
-			gethost();
+			gethost();				
 			version_show();
 			refresh_acl_table();
 		}
@@ -100,12 +98,19 @@ function apply() {
 	db_merlinclash["merlinclash_watchdog"] = E("merlinclash_watchdog").checked ? '1' : '0';
 	db_merlinclash["merlinclash_kcpswitch"] = E("merlinclash_kcpswitch").checked ? '1' : '0';
 	db_merlinclash["merlinclash_ipv6switch"] = E("merlinclash_ipv6switch").checked ? '1' : '0';
+	db_merlinclash["merlinclash_nmswitch"] = E("merlinclash_nmswitch").checked ? '1' : '0';
 	db_merlinclash["merlinclash_dnsplan"] = radio;
 	db_merlinclash["merlinclash_links"] = E("merlinclash_links").value;
 	db_merlinclash["merlinclash_links2"] = E("merlinclash_links2").value;
+	//URL编码后再传入后端
+	var links3 = encodeURIComponent(E("merlinclash_links3").value);
+	db_merlinclash["merlinclash_links3"] = links3;
 	//db_merlinclash["merlinclash_udpr"] = E("merlinclash_udpr").checked ? '1' : '0';
 	db_merlinclash["merlinclash_yamlsel"] = E("merlinclash_yamlsel").value;
 	db_merlinclash["merlinclash_delyamlsel"] = E("merlinclash_delyamlsel").value;
+	//20200630+++
+	db_merlinclash["merlinclash_acl4ssrsel"] = E("merlinclash_acl4ssrsel").value;
+	//20200630---	
 	//自定规则
 	if(E("ACL_table")){
 		var tr = E("ACL_table").getElementsByTagName("tr");
@@ -180,7 +185,10 @@ function tabSelect(w) {
 	$('.show-btn' + w).addClass('active');
 	$('#tablet_' + w).show();
 }
-
+function dingyue() {
+tabSelect(1);
+$('#apply_button').hide(); 	
+}
 function toggle_func() {
 	//$("#merlinclash_enable").click(
 	//function() {
@@ -206,6 +214,7 @@ function toggle_func() {
 		function() {
 			tabSelect(3);
 			$('#apply_button').show(); 
+			refresh_kcp_table();
 		});
 	$(".show-btn4").click(
 		function() {
@@ -218,6 +227,12 @@ function toggle_func() {
 			$('#apply_button').hide();
 			get_log();
 		});
+	$(".show-btn6").click(
+		function() {
+			tabSelect(6);
+			$('#apply_button').hide();
+			yaml_view();
+		});
 	//显示默认页
 	$(".show-btn0").trigger("click");
 
@@ -226,6 +241,8 @@ function get_clash_status_front() {
 	if (db_merlinclash['merlinclash_enable'] != "1") {
 		E("clash_state2").innerHTML = "clash进程 - " + "Waiting...";
 		E("clash_state3").innerHTML = "看门狗进程 - " + "Waiting...";
+		E("dashboard_state2").innerHTML = "面板host";
+		E("dashboard_state3").innerHTML = "面板端口";
 		return false;
 	}
 	//var id = parseInt(Math.random() * 100000000);
@@ -239,9 +256,13 @@ function get_clash_status_front() {
 			if (arr[0] == "" || arr[1] == "") {
 				E("clash_state2").innerHTML = "clash进程 - " + "Waiting for first refresh...";
 				E("clash_state3").innerHTML = "看门狗进程 - " + "Waiting for first refresh...";
+				E("dashboard_state2").innerHTML = "面板host";
+				E("dashboard_state3").innerHTML = "面板端口";
 			} else {
 				E("clash_state2").innerHTML = arr[0];
 				E("clash_state3").innerHTML = arr[1];
+				E("dashboard_state2").innerHTML = arr[5];
+				E("dashboard_state3").innerHTML = arr[6];
 			}
 		}
 	});
@@ -288,6 +309,23 @@ function get_online_yaml2(action) {
 		push_data("clash_online_yaml2.sh", "restart",  dbus_post);
 		
 }
+function get_online_yaml3(action) {
+	var dbus_post = {};
+	if(!$.trim($('#merlinclash_links3').val())){
+		alert("订阅链接不能为空！");
+		return false;
+	}
+	var links3 = encodeURIComponent(E("merlinclash_links3").value);
+	//alert(links3);
+	dbus_post["merlinclash_links3"] = db_merlinclash["merlinclash_links3"] = links3;
+	dbus_post["merlinclash_uploadrename4"] = db_merlinclash["merlinclash_uploadrename4"] = (E("merlinclash_uploadrename4").value);
+	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+	//20200630+++
+	dbus_post["merlinclash_acl4ssrsel"] = db_merlinclash["merlinclash_acl4ssrsel"] = E("merlinclash_acl4ssrsel").value;
+	//20200630---
+	push_data("clash_online_yaml4.sh", "restart",  dbus_post);
+	
+}
 function ssconvert(action) {
 	var dbus_post = {};
 	dbus_post["merlinclash_uploadrename3"] = db_merlinclash["merlinclash_uploadrename3"] = (E("merlinclash_uploadrename3").value);
@@ -300,7 +338,7 @@ function del_yaml_sel(action) {
 		alert("配置文件不能为空！");
 		return false;
 	}
-	if(E("merlinclash_delyamlsel").value == E("merlinclash_yamlsel").value){
+	if(E("merlinclash_delyamlsel").value == db_merlinclash["merlinclash_yamlsel"]){
 		alert("选择的配置文件为当前使用文件，不予删除！");
 		return false;
 	}
@@ -345,6 +383,40 @@ function download(yamlname) {
 	downloadA.download = db_merlinclash["merlinclash_delyamlsel"] + ".yaml";
 	downloadA.click();
 	window.URL.revokeObjectURL(downloadA.href);
+}
+function yaml_view() {
+$.ajax({
+		url: '/logreaddb.cgi?p=view.txt',
+		dataType: 'html',
+		success: function(response) {
+			var retArea = E("yaml_content1");
+			if (response.search("BBABBBBC") != -1) {
+				retArea.value = response.replace("BBABBBBC", " ");
+				var pageH = parseInt(E("FormTitle").style.height.split("px")[0]); 
+				if(pageH){
+					autoTextarea(E("yaml_content1"), 0, (pageH - 308));
+				}else{
+					autoTextarea(E("yaml_content1"), 0, 980);
+				}
+				return true;
+			}
+			if (_responseLen == response.length) {
+				noChange++;
+			} else {
+				noChange = 0;
+			}
+			if (noChange > 5) {
+				return false;
+			} else {
+				setTimeout("yaml_view();", 300);
+			}
+			retArea.value = response;
+			_responseLen = response.length;
+		},
+		error: function(xhr) {
+			E("yaml_content1").value = "获取配置文件信息失败！";
+		}
+	});
 }
 function get_log() {
 	$.ajax({
@@ -1114,8 +1186,11 @@ function menu_hook(title, tab) {
 										<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 										<div class="SimpleNote" id="head_illustrate"><i></i>
 											<p><a href="https://github.com/Dreamacro/clash" target="_blank"><em><u>Clash</u></em></a>是一个基于规则的代理程序，本插件使用<a href="https://github.com/BROBIRD/clash/releases" target="_blank"><em><u>BROBIRD</u></em></a>编译的ClashR内核，支持<a href="https://github.com/shadowsocks/shadowsocks-libev" target="_blank"><em><u>SS</u></em></a>、<a href="https://github.com/shadowsocksrr/shadowsocksr-libev" target="_blank"><em><u>SSR</u></em></a>、<a href="https://github.com/v2ray/v2ray-core" target="_blank"><em><u>V2Ray</u></em></a>、<a href="https://github.com/trojan-gfw/trojan" target="_blank"><em><u>Trojan</u></em></a>等方式科学上网。</p>
-											<p style="color:#FC0">注意：1.Clash需要专用订阅或配置文件才可以使用，如果您的机场没提供订阅，可以使用【<a href="https://acl4ssr.netlify.app/" target="_blank"><em><u>ACL4SSR 在线订阅转换</u></em></a>】。</p>
-											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.本插件不能与<a href="./Module_shadowsocks.asp" target="_blank"><em style="color: red;">科学上网</em></a>同时运行，首次使用请先上传配置文件或者使用Clash专用订阅。</p>
+											<p style="color:#FC0">注意：1.Clash需要专用订阅或配置文件才可以使用，如果您的机场没提供订阅，可以使用插件内置的2种【<a style="cursor:pointer" onclick="dingyue()" href="javascript:void(0);"><em><u>规则转换</u></em></a>】，</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;或者使用【<a href="https://acl4ssr.netlify.app/" target="_blank"><em><u>ACL4SSR 在线订阅转换</u></em></a>】。
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.本插件不能与【<a href="./Module_shadowsocks.asp" target="_blank"><em><u>科学上网</u></em></a>】同时运行。开启后如果Aria2/AiCloud无法外网访问，请设置<a href="./Advanced_VirtualServer_Content.asp" target="_blank"><em><u>端口转发</u></em></a>。</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.使用延迟最低(Url-Test)&nbsp;|&nbsp;故障切换(Fallback)&nbsp;|&nbsp;负载均衡(Load-Balance)等自动策略组前，请确认您的机场允许频繁TCPing，</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;否则您的帐号可能会被限制。</p>
 										</div>
 										<!-- this is the popup area for process status -->
 										<div id="detail_status"  class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: -20px;display: none;">
@@ -1172,6 +1247,7 @@ function menu_hook(title, tab) {
 														<input id="show_btn3" class="show-btn3" width="16%" style="cursor:pointer" type="button" value="高级模式" />
 														<input id="show_btn4" class="show-btn4" width="16%" style="cursor:pointer" type="button" value="附加功能" />
 														<input id="show_btn5" class="show-btn5" width="16%" style="cursor:pointer" type="button" value="操作日志" />
+														<input id="show_btn6" class="show-btn6" width="16%" style="cursor:pointer" type="button" value="当前配置" />
 													</td>
 												</tr>
 											</table>
@@ -1276,6 +1352,14 @@ function menu_hook(title, tab) {
 															<td colspan="2">Clash面板</td>
 														</tr>
 														</thead>
+														<tr id="clash_dashboard">
+															<th>面板信息</th>
+																<td>
+																	<div style="display:table-cell;float: left;margin-left:0px;">																			
+																		<span id="dashboard_state2">面板host</span> <span id="dashboard_state3">面板端口</span>
+																	</div>
+																</td>
+															</tr>
 														<tr>
 														<th id="btn-open-clash-dashboard" class="btn btn-primary">访问 Clash 面板</th>
 															<td colspan="2">
@@ -1294,160 +1378,213 @@ function menu_hook(title, tab) {
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 													<thead>
 													<tr>
-														<td colspan="2">MerlinClash 配置文件</td>
+														<td colspan="2">导入Clash配置文件</td>
 													</tr>
 													</thead>
 													<tr>
-													<th id="btn-open-clash-dashboard" class="btn btn-primary">配置文件</th>
+													<th id="btn-open-clash-dashboard" class="btn btn-primary">手动上传Clash配置文件</th>
 														<td colspan="2">
 															<input type="file" id="clashconfig" size="50" name="file"/>
 															<span id="clashconfig_info" style="display:none;">完成</span>
 															<button id="clashconfig-btn-upload" type="button" onclick="upload_clashconfig();" class="btn btn-primary">上传配置文件</button>
 														</td>
 													</tr>
+													<tr>
+														<th><br>在线Clash订阅
+															<br>
+															<br><em style="color: gold;">Clash专用订阅&nbsp;|&nbsp;ACL4SSR等转换订阅</em>
+														</th>
+														<td >
+															<div class="SimpleNote" style="display:table-cell;float: left;">
+																<label for="merlinclash_links">
+																	<textarea id="merlinclash_links" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
+																</label>
+															</div>
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename" maxlength="8" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字/字母">
+																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml(2)" href="javascript:void(0);">&nbsp;&nbsp;Clash订阅&nbsp;&nbsp;</a>
+																</div>
+														</td>
+													</tr>
 												</table>
-													<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
-														<thead>
-														<tr>
-															<td colspan="2">在线订阅</td>
-														</tr>
-														</thead>
-														<tr>
-															<th><br>clash订阅--当前仅支持单个地址订阅
-																<br>支持机场提供的clash订阅
-																<br>支持acl4ssr转换后的clash订阅
-															</th>
-															<td >
-																<div class="SimpleNote" style="display:table-cell;float: left;">
-																	<label for="merlinclash_links">
-																		<textarea id="merlinclash_links" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
-																	</label>
-																</div>
-																<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
-																	<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename" maxlength="8" style="color: #FFFFFF; width: 320px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字字母">
-																	<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml(2)" href="javascript:void(0);">&nbsp;&nbsp;clash订阅&nbsp;&nbsp;</a>
-																	</div>
-															</td>
-														</tr>
-														<tr>
-															<th><br>常规订阅--当前仅支持单个地址订阅，支持小飞机类型的订阅地址											
-																<br><em>(预置400kb规则文件)</em>
-																<br><p style="color: red;">订阅节点数量上百大佬慎用一键生成，除非你可以坐下来喝杯茶</p>
-															</th>
-															<td >
-																<div class="SimpleNote" style="display:table-cell;float: left;">
-																	<label for="merlinclash_links2">
-																		<textarea id="merlinclash_links2" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
-																	</label>
-																</div>
-																<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
-																	<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="8" style="color: #FFFFFF; width: 220px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字字母">
-																	<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(2)" href="javascript:void(0);">&nbsp;&nbsp;常规订阅&nbsp;&nbsp;</a>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<form name="form1">
-														<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
-															<thead>
-																<tr>
-																	<td colspan="2">下载/删除配置文件</td>
-																</tr>
-																</thead>
-															<tr id="delyamlselect">
-																<th>配置文件选择</th>
-																	<td colspan="2">
-																		<!--<input type="hidden" value="${stu.merlinclash_yamlsel}" id="yamlfile" />-->
-																		<select id="merlinclash_delyamlsel"  name="delyamlsel" dataType="Notnull" msg="配置文件不能为空!"></select>
-																		<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="download_yaml_sel()" href="javascript:void(0);">下载</a>
-																		<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="del_yaml_sel(0)" href="javascript:void(0);" >删除</a>
-																	</td>
-															</tr>
-														</table>
-														</form>
-												</div>				
-											</div>
-										<div id="tablet_2" style="display: none;">
-										
-												<div id="merlinclash_acl_table">
-										</div>
-												<div id="ACL_note" style="margin:10px 0 0 5px">
-												<div><i>&nbsp;&nbsp;1.编辑规则有风险，请勿在没完全搞懂的情况下，胡乱尝试。</i></div>
-												<div><i>&nbsp;&nbsp;2.如果您添加的规则不符合Clash的标准，进程会无法启动。请删除所有自定义规则，重新启动。</i></div>
-												<div><i>&nbsp;&nbsp;3.如果新加规则和老规则冲突，则会按照新规则执行。</i></div>
-												<div><i>&nbsp;&nbsp;4.【访问控制】写法示例：</i></div>
-												<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;让某设备不过代理：类型：<em>SRC-IP-CIDR</em>，内容：<em>192.168.50.201/32</em>（IP必须有掩码位），连接方式：<em>DIRECT</em>（大写）</i></div>
-												<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;禁止某端口联网：类型：<em>DST-PORT</em>，内容：<em>7777</em>（端口号），连接方式：<em>REJECT</em>（大写）</i></div>
-												<div><i>&nbsp;&nbsp;5.更多说明请点击表头查看，或者参阅Clash的【<a href="https://lancellc.gitbook.io/clash/clash-config-file/rules" target="_blank"><em><u>开发文档</u></em></a>】。</i></div>
-												<div><i>&nbsp;</i></div>
-											</div>
-											</div>
-										<div id="tablet_3" style="display: none;">
-												<div id="merlinclash-ipv6" style="margin:-1px 0px 0px 0px;">
-													<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
-														<thead>
-															<tr>
-																<td colspan="2">DNS ipv6 -- 打勾则将dns.ipv6设置为true</td>
-															</tr>
-															</thead>
-														<tr id="dns_plan">
-															<th>DNS ipv6开关</th>
-																<td colspan="2">
-																	<label for="merlinclash_ipv6switch">
-																		<input id="merlinclash_ipv6switch" type="checkbox" name="ipv6" >
-																	</label>
-																</td>
-														</tr>
-													</table>
-												</div>
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 
-												<div id="merlinclash-content-config" style="margin:-1px 0px 0px 0px;">
-													<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
-														<thead>
-														<tr>
-															<td colspan="2">KCP加速--需要服务器端支持  <a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(5)"><em>【帮助】</em></a> <a class="hintstyle" href="https://github.com/xtaci/kcptun/releases" target="_blank"><em style="color:gold;">【二进制下载】</em></a> </td>
-														</tr>
-														</thead>
-														<tr>
-															<th>KCP开关</th>
-																<td colspan="2">
-																	<div class="switch_field" style="display:table-cell;float: left;">
-																		<label for="merlinclash_kcpswitch">
-																			<input id="merlinclash_kcpswitch" class="switch" type="checkbox" style="display: none;">
-																			<div class="switch_container" >
-																				<div class="switch_bar"></div>
-																				<div class="switch_circle transition_style">
-																					<div></div>
-																				</div>
-																			</div>
-																		</label>
-																	</div>																	
-																</td>
-															</tr>
-													</table>
-													<div id="merlinclash_kcp_table">
-													</div>													
-												</div>	
-												<div id="merlinclash-ssconvert" style="margin:-1px 0px 0px 0px;">
+													
+													<thead>
+													<tr>
+														<td colspan="2">其他订阅转换Clash规则&nbsp;&nbsp;&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(6)"><em>【帮助】</em></td>
+													</tr>
+													</thead>
+													<tr>
+														<th><br>常规订阅
+															<br>
+															<br><em style="color: gold;">SS&nbsp;|&nbsp;SSR&nbsp;|&nbsp;V2ray&nbsp;|&nbsp;Trojan订阅</em>			
+															<br><em style="color: gold;">（使用内置8k+规则，杜绝订阅泄漏）</em>
+															<br><em style="color: red;">节点数过百后可能处理速度缓慢</em>
+														</th>
+														<td >
+															<div class="SimpleNote" style="display:table-cell;float: left;">
+																<label for="merlinclash_links2">
+																	<textarea id="merlinclash_links2" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
+																</label>
+															</div>
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="8" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字/字母">
+																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
+															</div>
+														</td>
+													</tr>
+													<tr>
+														<th><br>通过ACL4SSR在线转换
+															<br>
+															<br><em style="color: gold;">SS&nbsp;|&nbsp;SSR&nbsp;|&nbsp;V2ray订阅</em>
+															<br><em style="color: gold;">规则与GitHub项目同步更新</em>	
+															<br><em style="color: gold;">规则默认选项并非最优，还需自己摸索</em>																
+														</th>
+														<td >
+															<div class="SimpleNote" style="display:table-cell;float: left;">
+																<label for="merlinclash_links3">
+																	<textarea id="merlinclash_links3" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
+																</label>
+															</div>														
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+																<select id="merlinclash_acl4ssrsel" style="width:140px;margin:0px 0px 0px 2px;text-align:left;padding-left: 0px;" class="input_option">
+																	<option value="Online">Online默认版_分组比较全</option>
+																	<option value="AdblockPlus">AdblockPlus_更多去广告</option>	
+																	<option value="NoAuto">NoAuto_无自动测速</option>	
+																	<option value="NoReject">NoReject_无广告拦截规则</option>	
+																	<option value="Mini">Mini_精简版</option>	
+																	<option value="Mini_AdblockPlus">Mini_AdblockPlus_精简版更多去广告</option>	
+																	<option value="Mini_NoAuto">Mini_NoAuto_精简版无自动测速</option>
+																	<option value="Mini_Fallback">Mini_Fallback_精简版带故障转移</option>	
+																	<option value="Mini_MultiMode">Mini_MultiMode_精简版自动测速故障转移负载均衡</option>																				
+																</select>
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename4" maxlength="5" style="color: #FFFFFF; width: 150px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持5位数字/字母">
+																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml3(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
+															</div>
+														</td>
+													</tr>
+												</table>
+												<form name="form1">
 													<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
 														<thead>
 															<tr>
-																<td colspan="2">SS节点转换 -- 本地小飞机节点转换成clash-yaml格式</td>
+																<td colspan="2">下载&nbsp;|&nbsp;删除配置文件</td>
 															</tr>
 															</thead>
-														<tr id="ssconvert">
-															<th>一键转换</th>
+														<tr id="delyamlselect">
+															<th>配置文件选择</th>
 																<td colspan="2">
-																	<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename3" maxlength="8" style="color: #FFFFFF; width: 180px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;转换文件命名,支持8位数字字母">
-																	<label for="merlinclash_ssconvert_btn">
-																		<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="ssconvert(6)" href="javascript:void(0);">&nbsp;&nbsp;一键转换&nbsp;&nbsp;</a>																
-																	</label>
+																	<!--<input type="hidden" value="${stu.merlinclash_yamlsel}" id="yamlfile" />-->
+																	<select id="merlinclash_delyamlsel"  name="delyamlsel" dataType="Notnull" msg="配置文件不能为空!"></select>
+																	<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="download_yaml_sel()" href="javascript:void(0);">下载</a>
+																	<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="del_yaml_sel(0)" href="javascript:void(0);" >删除</a>
 																</td>
 														</tr>
 													</table>
-												</div>
+													</form>
+											</div>				
+										</div>
+										<!--自定规则-->
+										<div id="tablet_2" style="display: none;">
+																							
+											<div id="merlinclash_acl_table">
+											</div>												
+											<div id="ACL_note" style="margin:10px 0 0 5px">
+											<div><i>&nbsp;&nbsp;1.编辑规则有风险，请勿在没完全搞懂的情况下，胡乱尝试。</i></div>
+											<div><i>&nbsp;&nbsp;2.如果您添加的规则不符合Clash的标准，进程会无法启动。请删除所有自定义规则，重新启动。</i></div>
+											<div><i>&nbsp;&nbsp;3.如果新加规则和老规则冲突，则会按照新规则执行。</i></div>
+											<div><i>&nbsp;&nbsp;4.【访问控制】写法示例：</i></div>
+											<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;让某设备不过代理：类型：<em>SRC-IP-CIDR</em>，内容：<em>192.168.50.201/32</em>（IP必须有掩码位），连接方式：<em>DIRECT</em>（大写）</i></div>
+											<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;禁止某端口联网：类型：<em>DST-PORT</em>，内容：<em>7777</em>（端口号），连接方式：<em>REJECT</em>（大写）</i></div>
+											<div><i>&nbsp;&nbsp;5.更多说明请点击表头查看，或者参阅Clash的【<a href="https://lancellc.gitbook.io/clash/clash-config-file/rules" target="_blank"><em><u>开发文档</u></em></a>】。</i></div>
+											<div><i>&nbsp;</i></div>
+										</div>
+										</div>
+										<!--高级模式-->
+										<div id="tablet_3" style="display: none;">
+											<div id="merlinclash-ipv6" style="margin:-1px 0px 0px 0px;">
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
+													<thead>
+														<tr>
+															<td colspan="2">IPv6解析服务 -- 默认关闭</td>
+														</tr>
+														</thead>
+													<tr id="dns_ipv6">
+														<th>开启IPv6 DNS解析</th>
+															<td colspan="2">
+																<label for="merlinclash_ipv6switch">
+																	<input id="merlinclash_ipv6switch" type="checkbox" name="ipv6" >
+																</label>
+															</td>
+													</tr>
+												</table>
 											</div>
-											<div id="tablet_4" style="display: none;">
+											<div id="merlinclash-neteasemusic" style="margin:-1px 0px 0px 0px;">
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
+													<thead>
+														<tr>
+															<td colspan="2">网易云解锁 -- <a href='https://github.com/DesperadoJ/Rules-for-UnblockNeteaseMusic' target="_blank"><em style="color: gold;">【感谢DesperadoJ提供的解锁服务器】</em></a></td>
+														</tr>
+														</thead>
+													<tr id="neteasemusic">
+														<th>开启网易云解锁</th>
+															<td colspan="2">
+																<label for="merlinclash_nmswitch">
+																	<input id="merlinclash_nmswitch" type="checkbox" name="unblockneteasemusic" >
+																</label>
+															</td>
+													</tr>
+												</table>
+											</div>
+											<div id="merlinclash-content-config" style="margin:-1px 0px 0px 0px;">
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
+													<thead>
+													<tr>
+														<td colspan="2">KCP加速 -- 需要服务器端支持  <a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(5)"><em>【帮助】</em></a> <a class="hintstyle" href="https://github.com/xtaci/kcptun/releases" target="_blank"><em style="color:gold;">【二进制下载】</em></a> </td>
+													</tr>
+													</thead>
+													<tr>
+														<th>KCP开关</th>
+															<td colspan="2">
+																<div class="switch_field" style="display:table-cell;float: left;">
+																	<label for="merlinclash_kcpswitch">
+																		<input id="merlinclash_kcpswitch" class="switch" type="checkbox" style="display: none;">
+																		<div class="switch_container" >
+																			<div class="switch_bar"></div>
+																			<div class="switch_circle transition_style">
+																				<div></div>
+																			</div>
+																		</div>
+																	</label>
+																</div>																	
+															</td>
+														</tr>
+												</table>
+												<div id="merlinclash_kcp_table">
+												</div>
+											</div>	
+											<div id="merlinclash-ssconvert" style="margin:-1px 0px 0px 0px;">
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
+													<thead>
+														<tr>
+															<td colspan="2">导入【<a href=" ./Module_shadowsocks.asp" target="_blank"><em style="color:gold;">科学上网</em></a> 】节点</td>
+														</tr>
+														</thead>
+													<tr id="ssconvert">
+														<th>读取科学上网节点，转换为Clash规则</th>
+															<td colspan="2">
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename3" maxlength="8" style="color: #FFFFFF; width: 180px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;转换文件命名,支持8位数字/字母">
+																<label for="merlinclash_ssconvert_btn">
+																	<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="ssconvert(6)" href="javascript:void(0);">&nbsp;&nbsp;一键转换&nbsp;&nbsp;</a>																
+																</label>
+															</td>
+													</tr>
+												</table>
+											</div>
+										</div>
+										<!--附加功能-->
+										<div id="tablet_4" style="display: none;">
 											<div id="merlinclash-content-additional" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 													<thead>
@@ -1471,7 +1608,7 @@ function menu_hook(title, tab) {
 															</div>
 															<div class="SimpleNote" id="head_illustrate">
 																<p>MerlinClash 实现的 Clash 进程守护工具，每 60 秒检查一次 Clash 进程是否存在，如果 Clash 进程丢失则会自动重新拉起。</p>
-																<p style="color:red; margin-top: 8px">注意！经测试Clash自己本身能较稳定运行~且由于Clash不支持保存节点选择状态！进程重新启动后节点可能会变动，因此务必谨慎启用该功能！</p>
+																<p style="color:gold; margin-top: 8px">注意：Clash本身运行稳定，通常不必开启该功能~且由于Clash不支持保存节点选择状态，进程重新启后策略组配置会恢复初始状态！</p>
 															</div>
 														</td>
 													</tr>
@@ -1502,11 +1639,16 @@ function menu_hook(title, tab) {
 												<textarea cols="63" rows="36" wrap="on" readonly="readonly" id="log_content1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 											</div>
 										</div>
+										<div id="tablet_6" style="display: none;">
+											<div id="yaml_content" style="margin-top:-1px;overflow:hidden;">
+												<textarea cols="63" rows="36" wrap="on" readonly="readonly" id="yaml_content1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+											</div>
+										</div>
 										<div class="apply_gen" id="loading_icon">
 											<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 										</div>
 										<div id="apply_button" class="apply_gen">
-												<input class="button_gen" type="button" onclick="apply()" value="应用">
+											<input class="button_gen" type="button" onclick="apply()" value="保存&应用">
 										</div>
 									</td>
 								</tr>
@@ -1522,4 +1664,5 @@ function menu_hook(title, tab) {
 <div id="footer"></div>
 </body>
 </html>
+
 

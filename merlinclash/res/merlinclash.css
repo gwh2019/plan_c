@@ -271,6 +271,22 @@ input[type=checkbox]{
 	/*--------non rog--------*/
 	background:#475A5F;
 }
+#yaml_content1, #yaml_content_f, #yaml_content_c{
+	width:97%;
+	padding-left:4px;
+	padding-right:37px;
+	font-family:'Lucida Console';
+	font-size:11px;
+	line-height:1.5;
+	color:#FFFFFF;
+	outline:none;
+	overflow-x:hidden;
+	border:0px solid #222;
+	/*--------rog--------*/
+	/*background:transparent;*/
+	/*--------non rog--------*/
+	background:#475A5F;
+}
 #ss_basic_v2ray_json, #ss_dnsmasq, #ss_wan_white_ip, #ss_wan_white_domain, #ss_wan_black_ip, #ss_wan_black_domain, #ss_online_links, #ss_base64_links, #ss_node_table_v2ray_json, #ss_basic_kcp_parameter{
 	width:99%;
 	font-family:'Lucida Console';
@@ -379,6 +395,10 @@ input[type=checkbox]{
 }
 /*--------non rog--------*/
 #log_content, #log_content_fov{
+	outline: 1px solid #222;
+	width:748px;
+}
+#yaml_content, #yaml_content_fov{
 	outline: 1px solid #222;
 	width:748px;
 }

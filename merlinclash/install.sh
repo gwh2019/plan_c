@@ -95,8 +95,8 @@ chmod 755 /jffs/softcenter/merlinclash/*
 chmod 755 /jffs/softcenter/scripts/clash*
 
 echo_date 创建一些二进制文件的软链接！
-[ ! -L "/jffs/softcenter/init.d/S100merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/S99merlinclash.sh
-[ ! -L "/jffs/softcenter/init.d/N100merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
+[ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/S99merlinclash.sh
+[ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
 
 # 离线安装时设置软件中心内储存的版本号和连接
 CUR_VERSION=$(cat /jffs/softcenter/merlinclash/version)
@@ -111,16 +111,21 @@ rm -rf /tmp/clash* >/dev/null 2>&1
 
 echo_date clash插件安装成功！
 	#生成yamls.txt
-	[ -f /jffs/softcenter/merlinclash/yaml_bak/*.yaml ] && cp -rf /jffs/softcenter/merlinclash/yaml_bak/*.yaml /jffs/softcenter/merlinclash/
+	dir=/jffs/softcenter/merlinclash/yaml_bak
+	a=$(ls $dir | wc -l)
+	if [ $a -gt 0 ]
+	then
+		cp -rf /jffs/softcenter/merlinclash/yaml_bak/*.yaml /jffs/softcenter/merlinclash/
+	fi
 		
 	#生成新的txt文件
 
 	rm -rf /jffs/softcenter/merlinclash/yaml_bak/yamls.txt
 	echo_date "创建yaml文件列表"
 	#find $fp  -name "*.yaml" |sed 's#.*/##' >> $fp/yamls.txt
-	[ -f /jffs/softcenter/merlinclash/yaml_bak/*.yaml ] && find /jffs/softcenter/merlinclash/yaml_bak  -name "*.yaml" |sed 's#.*/##' |sed '/^$/d' | awk -F'.' '{print $1}' >> /jffs/softcenter/merlinclash/yaml_bak/yamls.txt
+	find /jffs/softcenter/merlinclash/yaml_bak  -name "*.yaml" |sed 's#.*/##' |sed '/^$/d' | awk -F'.' '{print $1}' >> /jffs/softcenter/merlinclash/yaml_bak/yamls.txt
 	#创建软链接
-	[ -f /jffs/softcenter/merlinclash/yaml_bak/*.yaml ] && ln -s /jffs/softcenter/merlinclash/yaml_bak/yamls.txt /tmp/yamls.txt
+	ln -s /jffs/softcenter/merlinclash/yaml_bak/yamls.txt /tmp/yamls.txt
 	#
 	echo_date "初始化配置文件处理完成"
 if [ "$merlinclash_enable" == "1" ];then

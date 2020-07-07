@@ -4,6 +4,9 @@ dns:
    listen: 0.0.0.0:23453
    enhanced-mode: fake-ip
    fake-ip-range: 198.18.0.1/16 
+   fake-ip-filter: # fake ip white domain list
+    - '*.lan'
+    - localhost.ptlogin2.qq.com
    nameserver:
      - 119.29.29.29
      - 223.5.5.5

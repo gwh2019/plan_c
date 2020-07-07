@@ -63,7 +63,7 @@ get_ss_rule_now(){
 				fi
 				#add ss节点
 				echo_date "转换ss节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name $remarks
+				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
 				yq w -i /tmp/proxies.yaml proxies[$n].type "ss"
 				yq w -i /tmp/proxies.yaml proxies[$n].server $server
 				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
@@ -130,7 +130,7 @@ get_ss_rule_now(){
 				fi
 				#add ss节点
 				echo_date "转换v2ray节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name $remarks
+				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
 				yq w -i /tmp/proxies.yaml proxies[$n].type "v2ray"
 				yq w -i /tmp/proxies.yaml proxies[$n].server $server
 				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
@@ -157,7 +157,7 @@ get_ss_rule_now(){
 				fi
 				#add ss节点
 				echo_date "转换trojan节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name $remarks
+				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
 				yq w -i /tmp/proxies.yaml proxies[$n].type "trojan"
 				yq w -i /tmp/proxies.yaml proxies[$n].server $server
 				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port

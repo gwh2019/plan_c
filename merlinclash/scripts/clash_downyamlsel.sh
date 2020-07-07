@@ -13,7 +13,7 @@ filename=$(echo ${merlinclash_delyamlsel}.yaml)
 echo_date "$filename" >> $LOG_FILE
 mkdir -p /var/wwwext
 cp -rf $filepath/$filename /www/ext/${merlinclash_delyamlsel}.json
-if [ -f /www/ext/$filename ]; then
+if [ -f /www/ext/${merlinclash_delyamlsel}.json ]; then
 	echo_date "文件已复制" >> $LOG_FILE
 else
 	echo_date "文件复制失败" >> $LOG_FILE

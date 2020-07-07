@@ -39,6 +39,7 @@ get_oneline_rule_now(){
 		sleep 2
 		echo_date "退出订阅程序,请手动刷新退出" >> $LOG_FILE
 		unset_lock
+		echo BBABBBBC >> $LOG_FILE
 		exit 1
 	else
 		# ss订阅	
@@ -263,7 +264,7 @@ add_trojan_servers(){
 	echo_date "$num ：转换 trojan 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name $remarks
+	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
 	yq w -i /tmp/proxies.yaml proxies[$num].type "trojan"
 	yq w -i /tmp/proxies.yaml proxies[$num].server $server
 	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
@@ -287,7 +288,7 @@ add_v2ray_servers(){
 	echo_date "$num ：转换 v2ray 节点：$v2ray_ps"
 	#echo_date $num
 	#echo_date $num $v2ray_add
-	yq w -i /tmp/proxies.yaml proxies[$num].name $v2ray_ps
+	yq w -i /tmp/proxies.yaml proxies[$num].name "$v2ray_ps"
 	yq w -i /tmp/proxies.yaml proxies[$num].type "vmess"
 	yq w -i /tmp/proxies.yaml proxies[$num].server $v2ray_add
 	yq w -i /tmp/proxies.yaml proxies[$num].port $v2ray_port
@@ -369,7 +370,7 @@ add_ssr_nodes(){
 	echo_date "$num ：转换 ssr 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name $remarks
+	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
 	yq w -i /tmp/proxies.yaml proxies[$num].type "ssr"
 	yq w -i /tmp/proxies.yaml proxies[$num].server $server
 	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
@@ -424,7 +425,7 @@ add_ss_servers(){
 	echo_date "$num ：转换 ss 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name $remarks
+	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
 	yq w -i /tmp/proxies.yaml proxies[$num].type "ss"
 	yq w -i /tmp/proxies.yaml proxies[$num].server $server
 	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port

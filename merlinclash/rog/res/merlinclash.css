@@ -255,7 +255,7 @@ input[type=checkbox]{
 	/*--------non rog--------*/
 	/*border-bottom:none;*/
 }
-#log_content1, #log_content_f, #log_content_c{
+#log_content1, #log_content_f, #log_content_c, #yaml_content1{
 	width:97%;
 	padding-left:4px;
 	padding-right:37px;

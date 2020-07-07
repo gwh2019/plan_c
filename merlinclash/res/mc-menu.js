@@ -460,8 +460,9 @@ function openmcHint(itemNum) {
 	if (itemNum == 4) {
 		width = "350px";
 		bgcolor = "#CC0066",
-		statusmenu = "连接方式根据内容，可为DIRECT(直连),REJECT(阻断),Proxy名（节点名）,Proxy Group名（规则组名）</br>";
-		statusmenu = "如果您的规则组有emoji/空格/符号，请完整复制emoji/空格/符号和您的规则组</br>";
+		statusmenu += "<span><b><font color='#CC0066'>连接方式根据内容</font></b></br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;可为DIRECT(直连),REJECT(阻断),Proxy名（节点名）,Proxy Group名（规则组名）</br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;如果您的节点名/规则组名有emoji/空格/符号，请完整复制emoji/空格/符号和您的规则组</br>"
 		_caption = "连接方式说明";
 		
 	}
@@ -470,6 +471,21 @@ function openmcHint(itemNum) {
 		bgcolor = "#CC0066",
 		statusmenu += "空"
 		_caption = "KCP帮助";
+		
+	}
+	if (itemNum == 6) {
+		width = "350px";
+		bgcolor = "#CC0066",
+		statusmenu += "<span><b><font color='#CC0066'>常规订阅</font></b></br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;支持常规机场的SS|SSR|V2ray|Trojan订阅连接</br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;暂不支持【SS://】【SSR://】【Vemss://】【Trajon://】方式订阅单独节点</br>"
+        statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;<font color=#279fd9>如果转换失败，请使用前往ACL4SSR主页在线转换</font></br>"
+		//acl4ssr
+		statusmenu += "<span><b><font color='#CC0066'>通过ACL4SSR在线转换</font></b></br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;支持常规机场的SS|SSR|V2ray订阅连接</br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;暂不支持Trojan订阅，如有需要请访问https://api.nameless13.com/</br>"
+        statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;<font color=#279fd9>如果转换失败，请使用前往ACL4SSR主页在线转换</font></br>"
+		_caption = "订阅帮助";
 		
 	}
 	return overlib(statusmenu, OFFSETX, -500, LEFT, STICKY, WIDTH, 'width', CAPTION, _caption, CLOSETITLE, '');

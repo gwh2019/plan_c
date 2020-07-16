@@ -7,7 +7,7 @@ LOG_FILE=/tmp/merlinclash_log.txt
 
 rm -rf /tmp/merlinclash_log.txt
 rm -rf /tmp/*.yaml
-LOCK_FILE=/tmp/yaml_online_update.lock
+LOCK_FILE=/var/lock/yaml_online_update.lock
 flag=0
 upname=""
 upname_tmp=""

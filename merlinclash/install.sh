@@ -48,29 +48,31 @@ rm -rf /jffs/softcenter/merlinclash/*.yaml
 rm -rf /jffs/softcenter/merlinclash/clashconfig.sh
 rm -rf /jffs/softcenter/merlinclash/version
 rm -rf /jffs/softcenter/merlinclash/yaml/
+rm -rf /jffs/softcenter/merlinclash/dashboard/
 rm -rf /jffs/softcenter/bin/clash
 rm -rf /jffs/softcenter/bin/yq
-rm -rf /jffs/softcenter/*.yaml
+rm -rf /tmp/*.yaml
 rm -rf /jffs/softcenter/webs/Module_merlinclash*
 rm -rf /jffs/softcenter/res/icon-merlinclash.png
 rm -rf /jffs/softcenter/scripts/clash*
 
 find /jffs/softcenter/init.d/ -name "*clash.sh" | xargs rm -rf
-
-cd /jffs/softcenter/merlinclash && mkdir -p yaml && cd
-cd /jffs/softcenter/merlinclash && mkdir -p yaml_bak && cd
+cd /jffs/softcenter/bin && mkdir -p Music
+cd /jffs/softcenter/merlinclash && mkdir -p dashboard
+cd /jffs/softcenter/merlinclash && mkdir -p yaml
+cd /jffs/softcenter/merlinclash && mkdir -p yaml_bak
 echo_date 开始复制文件！
 cd /tmp
 
 echo_date 复制相关二进制文件！此步时间可能较长！
 cp -rf /tmp/merlinclash/clash/clash /jffs/softcenter/bin/
 cp -rf /tmp/merlinclash/clash/yq /jffs/softcenter/bin/
-
 cp -rf /tmp/merlinclash/clash/Country.mmdb /jffs/softcenter/merlinclash/
 cp -rf /tmp/merlinclash/clash/clashconfig.sh /jffs/softcenter/merlinclash/
 cp -rf /tmp/merlinclash/version /jffs/softcenter/merlinclash/
 
 cp -rf /tmp/merlinclash/yaml/* /jffs/softcenter/merlinclash/yaml/
+cp -rf /tmp/merlinclash/dashboard/* /jffs/softcenter/merlinclash/dashboard/
 
 echo_date 复制相关的脚本文件！
 cp -rf /tmp/merlinclash/scripts/* /jffs/softcenter/scripts/
@@ -96,11 +98,12 @@ chmod 755 /jffs/softcenter/scripts/clash*
 
 echo_date 创建一些二进制文件的软链接！
 [ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/S99merlinclash.sh
-[ ! -L "/jffs/softcenter/init.d/S99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
+[ ! -L "/jffs/softcenter/init.d/N99merlinclash.sh" ] && ln -sf /jffs/softcenter/merlinclash/clashconfig.sh /jffs/softcenter/init.d/N99merlinclash.sh
 
 # 离线安装时设置软件中心内储存的版本号和连接
 CUR_VERSION=$(cat /jffs/softcenter/merlinclash/version)
 dbus set merlinclash_version_local="$CUR_VERSION"
+dbus set merlinclash_clash_version=$(/jffs/softcenter/bin/clash -v 2>/dev/null | head -n 1 | cut -d " " -f2)
 dbus set softcenter_module_merlinclash_install="1"
 dbus set softcenter_module_merlinclash_version="$CUR_VERSION"
 dbus set softcenter_module_merlinclash_title="Merlin Clash"

@@ -23,7 +23,9 @@ do_build() {
 	rm -rf $MODULE/clash/clash
 	rm -rf $MODULE/clash/yq
 	rm -rf $MODULE/clash/client_linux
-	cp -rf ./bin_arch/$1/* $MODULE/clash/
+	cp -rf ./bin_arch/$1/clash $MODULE/clash/
+	cp -rf ./bin_arch/$1/yq $MODULE/clash/
+	cp -rf ./bin_arch/$1/client_linux $MODULE/clash/
 	tar -zcvf ${MODULE}.tar.gz $MODULE
 	md5value=`md5sum ${MODULE}.tar.gz|tr " " "\n"|sed -n 1p`
 	cat > ./version <<-EOF

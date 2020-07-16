@@ -921,7 +921,6 @@ rules:
   - DOMAIN-SUFFIX,fc-.cdn.bcebos.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,fc-feed.cdn.bcebos.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,fclick.baidu.com,⛔ 应用拦截
-  - DOMAIN-SUFFIX,feed.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,fexclick.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,g.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,gimg.baidu.com,⛔ 应用拦截
@@ -998,9 +997,6 @@ rules:
   - DOMAIN-SUFFIX,stat.v.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,su.bdimg.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,su.bdstatic.com,⛔ 应用拦截
-  - DOMAIN-SUFFIX,t10.baidu.com,⛔ 应用拦截
-  - DOMAIN-SUFFIX,t11.baidu.com,⛔ 应用拦截
-  - DOMAIN-SUFFIX,t12.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,tk.baidu.cn,⛔ 应用拦截
   - DOMAIN-SUFFIX,tk.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,tkweb.baidu.com,⛔ 应用拦截
@@ -1015,7 +1011,6 @@ rules:
   - DOMAIN-SUFFIX,ucstat.baidu.cn,⛔ 应用拦截
   - DOMAIN-SUFFIX,ucstat.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,ufosdk.baidu.cn,⛔ 应用拦截
-  - DOMAIN-SUFFIX,ufosdk.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,ulic.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,ulog.imap.baidu.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,union.baidu.cn,⛔ 应用拦截
@@ -1125,7 +1120,6 @@ rules:
   - DOMAIN-SUFFIX,bssdlbig.kugou.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,d.kugou.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,downmobile.kugou.com,⛔ 应用拦截
-  - DOMAIN-SUFFIX,fanxing.kugou.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,gad.kugou.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,game.kugou.com,⛔ 应用拦截
   - DOMAIN-SUFFIX,gamebox.kugou.com,⛔ 应用拦截
@@ -1960,14 +1954,10 @@ rules:
   - "DOMAIN-SUFFIX,youtube.com,\U0001F4F9 YouTube"
   - "DOMAIN,youtubei.googleapis.com,\U0001F4F9 YouTube"
   #Netflix
+  - "DOMAIN,netflix.com.edgesuite.net,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,fast.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflix.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflix.net,\U0001F3A5 NETFLIX"
-  - "DOMAIN-SUFFIX,nflxext.com,\U0001F3A5 NETFLIX"
-  - "DOMAIN-SUFFIX,nflximg.com,\U0001F3A5 NETFLIX"
-  - "DOMAIN-SUFFIX,nflximg.net,\U0001F3A5 NETFLIX"
-  - "DOMAIN-SUFFIX,nflxso.net,\U0001F3A5 NETFLIX"
-  - "DOMAIN-SUFFIX,nflxvideo.net,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflixdnstest0.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflixdnstest1.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflixdnstest2.com,\U0001F3A5 NETFLIX"
@@ -1978,13 +1968,20 @@ rules:
   - "DOMAIN-SUFFIX,netflixdnstest7.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflixdnstest8.com,\U0001F3A5 NETFLIX"
   - "DOMAIN-SUFFIX,netflixdnstest9.com,\U0001F3A5 NETFLIX"
+  - "DOMAIN-SUFFIX,nflxext.com,\U0001F3A5 NETFLIX"
+  - "DOMAIN-SUFFIX,nflximg.com,\U0001F3A5 NETFLIX"
+  - "DOMAIN-SUFFIX,nflximg.net,\U0001F3A5 NETFLIX"
+  - "DOMAIN-SUFFIX,nflxso.net,\U0001F3A5 NETFLIX"
+  - "DOMAIN-SUFFIX,nflxvideo.net,\U0001F3A5 NETFLIX"
   - "IP-CIDR,8.41.4.0/24,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,23.246.0.0/18,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,37.77.184.0/21,\U0001F3A5 NETFLIX,no-resolve"
+  - "IP-CIDR,38.72.126.0/24,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,45.57.0.0/17,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,64.120.128.0/17,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,66.197.128.0/17,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,69.53.224.0/19,\U0001F3A5 NETFLIX,no-resolve"
+  - "IP-CIDR,103.87.204.0/22,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,108.175.32.0/20,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,185.2.220.0/22,\U0001F3A5 NETFLIX,no-resolve"
   - "IP-CIDR,185.9.188.0/22,\U0001F3A5 NETFLIX,no-resolve"
@@ -2031,6 +2028,8 @@ rules:
   - DOMAIN-SUFFIX,dmm.co.jp,⛩ 日韩媒体
   - DOMAIN-SUFFIX,dmm.com,⛩ 日韩媒体
   - DOMAIN-SUFFIX,dmm-extension.com,⛩ 日韩媒体
+  - IP-CIDR,203.104.209.7/32,⛩ 日韩媒体,no-resolve
+  - IP-CIDR,125.6.189.7/32,⛩ 日韩媒体,no-resolve
   #-----------------港台媒体-------------------------------
   # Bahamut
   - "DOMAIN,gamer-cds.cdn.hinet.net,\U0001F4FA 巴哈姆特"
@@ -2082,11 +2081,6 @@ rules:
   - "DOMAIN-SUFFIX,p-cdn.us,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,sndcdn.com,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,soundcloud.com,\U0001F30D 国外媒体"
-  - "DOMAIN-SUFFIX,pscdn.co,\U0001F30D 国外媒体"
-  - "DOMAIN-SUFFIX,scdn.co,\U0001F30D 国外媒体"
-  - "DOMAIN-KEYWORD,spotify,\U0001F30D 国外媒体"
-  - "DOMAIN-SUFFIX,spoti.fi,\U0001F30D 国外媒体"
-  - "DOMAIN-KEYWORD,-spotify-com,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,tidal.com,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,cloudfront.net,\U0001F30D 国外媒体"
   - "DOMAIN-KEYWORD,abema,\U0001F30D 国外媒体"
@@ -2096,6 +2090,14 @@ rules:
   - "DOMAIN-SUFFIX,viu.tv,\U0001F30D 国外媒体"
   - "DOMAIN,api.viu.now.com,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,qobuz.com,\U0001F30D 国外媒体"
+  # 内容：Spotify
+  - "DOMAIN-KEYWORD,-spotify-com,\U0001F30D 国外媒体"
+  - "DOMAIN-KEYWORD,spotify.com,\U0001F30D 国外媒体"
+  - "DOMAIN-SUFFIX,pscdn.co,\U0001F30D 国外媒体"
+  - "DOMAIN-SUFFIX,scdn.co,\U0001F30D 国外媒体"
+  - "DOMAIN-SUFFIX,spoti.fi,\U0001F30D 国外媒体"
+  - "DOMAIN-SUFFIX,spotify.com,\U0001F30D 国外媒体"
+  - "DOMAIN-SUFFIX,spotifycdn.net,\U0001F30D 国外媒体"
   # ABC
   - "DOMAIN-SUFFIX,edgedatg.com,\U0001F30D 国外媒体"
   - "DOMAIN-SUFFIX,go.com,\U0001F30D 国外媒体"
@@ -2299,6 +2301,7 @@ rules:
   - "DOMAIN-SUFFIX,skk.moe,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,gitbook.io,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,gitbook.com,\U0001F1FA\U0001F1F3 国外网站"
+  - "DOMAIN-SUFFIX,substack.com,\U0001F1FA\U0001F1F3 国外网站"
   # 国外域名
   - "DOMAIN-SUFFIX,eu,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,hk,\U0001F1FA\U0001F1F3 国外网站"
@@ -6428,7 +6431,6 @@ rules:
   - "DOMAIN-SUFFIX,spideroak.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,spike.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,spotflux.com,\U0001F1FA\U0001F1F3 国外网站"
-  - "DOMAIN-SUFFIX,spotify.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,spreadshirt.es,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,spring4u.info,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,springboardplatform.com,\U0001F1FA\U0001F1F3 国外网站"
@@ -7704,10 +7706,10 @@ rules:
   - "DOMAIN-SUFFIX,spring.net,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,stackoverflow.com,\U0001F1FA\U0001F1F3 国外网站"
   # Github
-  - "DOMAIN-SUFFIX,githubassets.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-KEYWORD,github,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,github.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,github.io,\U0001F1FA\U0001F1F3 国外网站"
+  - "DOMAIN-SUFFIX,githubassets.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,githubapp.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,githubusercontent.com,\U0001F1FA\U0001F1F3 国外网站"
   - "DOMAIN-SUFFIX,rawgit.com,\U0001F1FA\U0001F1F3 国外网站"
@@ -7772,17 +7774,22 @@ rules:
   #---------------------------国内网站--------------------------------#
   #---------------------------国内媒体--------------------------------#
   # Bilibili 哔哩哔哩
+  - "DOMAIN,upos-hz-mirrorakam.akamaized.net,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,acg.tv,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,acgvideo.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,b23.tv,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,bigfun.cn,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,bigfunapp.cn,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,biliapi.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,biliapi.net,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,bilibili.com,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,bilibili.tv,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,biligame.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,biligame.net,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,bilivideo.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,hdslb.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,im9.com,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,smtcdns.net,\U0001F1E8\U0001F1F3 国内网站"
   # IQiyi 爱奇艺
   - "DOMAIN-KEYWORD,qiyi,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,71.am,\U0001F1E8\U0001F1F3 国内网站"
@@ -8098,6 +8105,9 @@ rules:
   # YYeTs 人人影视
   - "DOMAIN-SUFFIX,got001.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,jstucdn.com,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,rrys.tv,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,rrys2020.com,\U0001F1E8\U0001F1F3 国内网站"
+  - "DOMAIN-SUFFIX,yyets.com,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,zimuzu.io,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,zimuzu.tv,\U0001F1E8\U0001F1F3 国内网站"
   - "DOMAIN-SUFFIX,zmz001.com,\U0001F1E8\U0001F1F3 国内网站"

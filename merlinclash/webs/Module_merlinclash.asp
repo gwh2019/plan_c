@@ -42,6 +42,14 @@ function init() {
 	show_menu(menu_hook);
 	get_dbus_data();
 	yaml_select();
+	clashbinary_select();
+	refresh_pgnodes_table();
+	proxies_select();
+	proxygroup_select();
+	yaml_view();
+	get_log();
+	refresh_kcp_table();
+	check_unblockneteasemusic_status();	
 	if(E("merlinclash_enable").checked){
 		merlinclash.checkIP();
 	}
@@ -58,8 +66,17 @@ function get_dbus_data() {
 			E("merlinclash_watchdog").checked = db_merlinclash["merlinclash_watchdog"] == "1";
 			E("merlinclash_kcpswitch").checked = db_merlinclash["merlinclash_kcpswitch"] == "1";
 			E("merlinclash_ipv6switch").checked = db_merlinclash["merlinclash_ipv6switch"] == "1";
-			E("merlinclash_nmswitch").checked = db_merlinclash["merlinclash_nmswitch"] == "1";
+			//E("merlinclash_nmswitch").checked = db_merlinclash["merlinclash_nmswitch"] == "1";
+			E("merlinclash_unblockmusic_enable").checked = db_merlinclash["merlinclash_unblockmusic_enable"] == "1";
+			if(db_merlinclash["merlinclash_unblockmusic_endpoint"]){
+				E("merlinclash_unblockmusic_endpoint").value = db_merlinclash["merlinclash_unblockmusic_endpoint"];
+			}
+			if(db_merlinclash["merlinclash_unblockmusic_musicapptype"]){
+				E("merlinclash_unblockmusic_musicapptype").value = db_merlinclash["merlinclash_unblockmusic_musicapptype"];
+			}
+			//E("merlinclash_kpswitch").checked = db_merlinclash["merlinclash_kpswitch"] == "1";
 			//E("merlinclash_udpr").checked = db_merlinclash["merlinclash_udpr"] == "1";
+			E("merlinclash_unblockmusic_bestquality").checked = db_merlinclash["merlinclash_unblockmusic_bestquality"] == "1";			
 			if(db_merlinclash["merlinclash_links"]){					
 				E("merlinclash_links").value = db_merlinclash["merlinclash_links"];
 			}
@@ -83,10 +100,114 @@ function get_dbus_data() {
 			toggle_func();
 			get_clash_status_front();
 			gethost();				
+			dnsfiles();				
 			version_show();
 			refresh_acl_table();
 		}
 	});
+}
+
+var yamlsel_tmp2;
+function quickly_restart() {
+	if(!$.trim($('#merlinclash_yamlsel').val())){
+		alert("必须选择一个配置文件！");
+		return false;
+	}
+	//var radio = document.getElementsByName("dnsplan").innerHTML = getradioval();
+	//db_merlinclash["merlinclash_enable"] = E("merlinclash_enable").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_watchdog"] = E("merlinclash_watchdog").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_kcpswitch"] = E("merlinclash_kcpswitch").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_ipv6switch"] = E("merlinclash_ipv6switch").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_nmswitch"] = E("merlinclash_nmswitch").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_unblockmusic_enable"] = E("merlinclash_unblockmusic_enable").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_unblockmusic_endpoint"] = E("merlinclash_unblockmusic_endpoint").value;
+	//db_merlinclash["merlinclash_unblockmusic_musicapptype"] = E("merlinclash_unblockmusic_musicapptype").value;
+	
+	//db_merlinclash["merlinclash_kpswitch"] = E("merlinclash_kpswitch").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_dnsplan"] = radio;
+	//db_merlinclash["merlinclash_links"] = E("merlinclash_links").value;
+	//db_merlinclash["merlinclash_links2"] = E("merlinclash_links2").value;
+	//URL编码后再传入后端
+	//var links3 = encodeURIComponent(E("merlinclash_links3").value);
+	//db_merlinclash["merlinclash_links3"] = links3;
+	//db_merlinclash["merlinclash_udpr"] = E("merlinclash_udpr").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_yamlsel"] = E("merlinclash_yamlsel").value;
+	yamlsel_tmp1 = E("merlinclash_yamlsel").value;
+	//db_merlinclash["merlinclash_delyamlsel"] = E("merlinclash_delyamlsel").value;
+	//20200630+++
+	//db_merlinclash["merlinclash_acl4ssrsel"] = E("merlinclash_acl4ssrsel").value;
+	//20200630---	
+	//自定规则
+	//if(E("ACL_table")){
+	//	var tr = E("ACL_table").getElementsByTagName("tr");
+	//	//for (var i = 1; i < tr.length - 1; i++) {
+	//	for (var i = 1; i < tr.length ; i++) {	
+	//		var rowid = tr[i].getAttribute("id").split("_")[2];
+	//		if (E("merlinclash_acl_type_" + i)){
+	//			db_merlinclash["merlinclash_acl_type_" + rowid] = E("merlinclash_acl_type_" + rowid).value;
+	//			db_merlinclash["merlinclash_acl_content_" + rowid] = E("merlinclash_acl_content_" + rowid).value;
+	//			db_merlinclash["merlinclash_acl_lianjie_" + rowid] = E("merlinclash_acl_lianjie_" + rowid).value;					
+	//		}else{
+	//			
+	//		}				
+	//	}
+	//}else{
+		
+	//}
+	//KCP
+	//if(E("KCP_table")){
+	//	var tr = E("KCP_table").getElementsByTagName("tr");
+	//	//for (var i = 1; i < tr.length - 1; i++) {
+	//	for (var i = 1; i < tr.length ; i++) {	
+	//		var rowid = tr[i].getAttribute("id").split("_")[2];
+	//		if (E("merlinclash_kcp_lport_" + i)){
+	//			db_merlinclash["merlinclash_kcp_lport_" + rowid] = E("merlinclash_kcp_lport_" + rowid).value;
+	//			db_merlinclash["merlinclash_kcp_server_" + rowid] = E("merlinclash_kcp_server_" + rowid).value;
+	//			db_merlinclash["merlinclash_kcp_port_" + rowid] = E("merlinclash_kcp_port_" + rowid).value;
+	//			db_merlinclash["merlinclash_kcp_param_" + rowid] = E("merlinclash_kcp_param_" + rowid).value;
+	//		}else{
+	//			
+	//		}				
+	//	}
+	//}else{
+
+//	}
+	var act;
+	//if(E("merlinclash_enable").checked){ 
+			//act = "start";
+			db_merlinclash["merlinclash_action"] = "1";
+			//alert('bbb');
+	//}else{
+			//act = "stop";
+	//		db_merlinclash["merlinclash_action"] = "0";
+			//alert('ccc');
+	//}
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_status.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=merlinclash.log&script=clash_status.sh",
+		dataType: 'html',
+		success: function(response) {
+			var arr = response.split("@");			
+			if (arr[0] == "" || arr[1] == "") {
+				
+			} else {
+				yamlsel_tmp2 = arr[7];
+				//更换配置文件，清空节点指定内容
+				if(yamlsel_tmp2==null){
+					yamlsel_tmp2=yamlsel_tmp1
+					
+				}
+				if(yamlsel_tmp2!=yamlsel_tmp1){
+					alert("切换配置不能直接快速重启");
+					refreshpage();
+					return false;						
+				}
+				push_data("clash_config.sh", "restart",  db_merlinclash);
+			}
+		}
+	});	
+	
 }
 function apply() {
 	if(!$.trim($('#merlinclash_yamlsel').val())){
@@ -98,7 +219,12 @@ function apply() {
 	db_merlinclash["merlinclash_watchdog"] = E("merlinclash_watchdog").checked ? '1' : '0';
 	db_merlinclash["merlinclash_kcpswitch"] = E("merlinclash_kcpswitch").checked ? '1' : '0';
 	db_merlinclash["merlinclash_ipv6switch"] = E("merlinclash_ipv6switch").checked ? '1' : '0';
-	db_merlinclash["merlinclash_nmswitch"] = E("merlinclash_nmswitch").checked ? '1' : '0';
+	//db_merlinclash["merlinclash_nmswitch"] = E("merlinclash_nmswitch").checked ? '1' : '0';
+	db_merlinclash["merlinclash_unblockmusic_enable"] = E("merlinclash_unblockmusic_enable").checked ? '1' : '0';
+	db_merlinclash["merlinclash_unblockmusic_endpoint"] = E("merlinclash_unblockmusic_endpoint").value;
+	db_merlinclash["merlinclash_unblockmusic_musicapptype"] = E("merlinclash_unblockmusic_musicapptype").value;
+	
+	//db_merlinclash["merlinclash_kpswitch"] = E("merlinclash_kpswitch").checked ? '1' : '0';
 	db_merlinclash["merlinclash_dnsplan"] = radio;
 	db_merlinclash["merlinclash_links"] = E("merlinclash_links").value;
 	db_merlinclash["merlinclash_links2"] = E("merlinclash_links2").value;
@@ -106,7 +232,9 @@ function apply() {
 	var links3 = encodeURIComponent(E("merlinclash_links3").value);
 	db_merlinclash["merlinclash_links3"] = links3;
 	//db_merlinclash["merlinclash_udpr"] = E("merlinclash_udpr").checked ? '1' : '0';
+	db_merlinclash["merlinclash_unblockmusic_bestquality"] = E("merlinclash_unblockmusic_bestquality").checked ? '1' : '0';
 	db_merlinclash["merlinclash_yamlsel"] = E("merlinclash_yamlsel").value;
+	yamlsel_tmp1 = E("merlinclash_yamlsel").value;
 	db_merlinclash["merlinclash_delyamlsel"] = E("merlinclash_delyamlsel").value;
 	//20200630+++
 	db_merlinclash["merlinclash_acl4ssrsel"] = E("merlinclash_acl4ssrsel").value;
@@ -148,7 +276,32 @@ function apply() {
 			db_merlinclash["merlinclash_action"] = "0";
 			//alert('ccc');
 	}
-	push_data("clash_config.sh", "start",  db_merlinclash);
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_status.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=merlinclash.log&script=clash_status.sh",
+		dataType: 'html',
+
+		success: function(response) {
+			var arr = response.split("@");			
+			if (arr[0] == "" || arr[1] == "") {
+				
+			} else {
+				yamlsel_tmp2 = arr[7];
+				//更换配置文件，清空节点指定内容
+				if(yamlsel_tmp2==null){
+					yamlsel_tmp2=yamlsel_tmp1
+					
+				}
+				if(yamlsel_tmp2!=yamlsel_tmp1){
+					apply_delallpgnodes();
+					db_merlinclash["merlinclash_action"] = "1";
+					
+				}
+				push_data("clash_config.sh", "start",  db_merlinclash);
+			}
+		}
+	});
 }
 function push_data(script, arg, obj, flag){
 	if (!flag) showMCLoadingBar();
@@ -188,6 +341,7 @@ function tabSelect(w) {
 function dingyue() {
 tabSelect(1);
 $('#apply_button').hide(); 	
+$('#delallpgnodes_button').hide();
 }
 function toggle_func() {
 	//$("#merlinclash_enable").click(
@@ -198,40 +352,62 @@ function toggle_func() {
 		function() {
 			tabSelect(0);
 			$('#apply_button').show(); 
+			$('#delallpgnodes_button').hide(); 			
 		});
 	$(".show-btn1").click( 
 		function() {
 			tabSelect(1);
 			$('#apply_button').hide(); 
+			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn2").click(
 		function() {
 			tabSelect(2);
 			$('#apply_button').show();
-			refresh_acl_table();
+			$('#delallpgnodes_button').hide();
+			//refresh_acl_table();
 		});
 	$(".show-btn3").click(
 		function() {
 			tabSelect(3);
 			$('#apply_button').show(); 
-			refresh_kcp_table();
+			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn4").click(
 		function() {
+			if(db_merlinclash["merlinclash_updata_date"]){
+				E("geoip_updata_date").innerHTML = "<span style='color: gold'>上次更新时间："+db_merlinclash["merlinclash_updata_date"]+"</span>";
+			}
+			//if(db_merlinclash["merlinclash_update_clashdate"]){
+			//	E("clash_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_clashdate"]+"</span>";
+			//}
 			tabSelect(4);
 			$('#apply_button').hide();
+			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn5").click(
 		function() {
 			tabSelect(5);
 			$('#apply_button').hide();
-			get_log();
+			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn6").click(
 		function() {
 			tabSelect(6);
 			$('#apply_button').hide();
-			yaml_view();
+			$('#delallpgnodes_button').hide();
+		});
+	$(".show-btn7").click(
+		function() {
+			tabSelect(7);
+			$('#apply_button').show();
+			$('#delallpgnodes_button').show();		
+		});
+        $(".show-btn8").click(
+		function() {
+			tabSelect(8);
+			$('#apply_button').show();
+			$('#delallpgnodes_button').hide(); 
 		});
 	//显示默认页
 	$(".show-btn0").trigger("click");
@@ -263,11 +439,26 @@ function get_clash_status_front() {
 				E("clash_state3").innerHTML = arr[1];
 				E("dashboard_state2").innerHTML = arr[5];
 				E("dashboard_state3").innerHTML = arr[6];
+				yamlsel_tmp2 = arr[7];
 			}
 		}
 	});
 
 	setTimeout("get_clash_status_front();", 10000);
+}
+function get_clash_nodes_proxygroup_front() {
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_nodesproxygroup.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=clash_proc_status.txt&script=clash_nodesproxygroup.sh",
+		async: true,
+		data: JSON.stringify(postData),
+		success: function(response) {
+			
+		}
+	});
+
+	setTimeout("get_clash_nodes_proxygroup_front();", 10000);
 }
 function close_proc_status() {
 	$("#detail_status").fadeOut(200);
@@ -528,6 +719,50 @@ function clear_yaml() {
 		}
 	});
 }
+
+function upload_clashbinary() {
+
+	if(!$.trim($('#clashbinary').val())){
+		alert("请先选择clash文件");
+		return false;
+	}
+
+	require(['/res/layer/layer.js'], function(layer) {
+		layer.confirm('<li>请确保clash二进制文件合法！仍要替换clash吗？</li>', {
+			shade: 0.8,
+		}, function(index) {
+			E('clashbinary_upload').style.display = "none";
+			var formData = new FormData();
+			formData.append("clash", document.getElementById('clashbinary').files[0]);
+			$.ajax({
+				url: 'ssupload.cgi?a=/tmp/clash',
+				type: 'POST',
+				cache: false,
+				data: formData,
+				processData: false,
+				contentType: false,
+				complete: function(res) {
+					if (res.status == 200) {
+						upload_binary();
+					}
+				}
+			});
+			layer.close(index);
+			return true;			
+		}, function(index) {
+			layer.close(index);
+			return false;
+		});
+	});
+	
+	
+}
+function upload_binary() {
+	var dbus_post = {};
+	action = dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = "12"
+	push_data("clash_local_binary_upload.sh", "start",  dbus_post);
+	E('clashbinary_upload').style.display = "block";
+}
 //上传配置文件到/tmp文件夹
 function upload_clashconfig() {
 	var filename = $("#clashconfig").val();
@@ -586,20 +821,139 @@ function gethost() {
 			if (arr[2] == "") {
 
 			} else {		
-				$("#yacd").html("<a href='http://yacd.haishan.me/?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target=_blank' id='razord' ><button type='button' class='btn btn-primary'>访问 YACD-Clash 面板</button></a>");
+				//$("#yacd").html("<a href='http://yacd.haishan.me/?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target=_blank' id='razord' ><button type='button' class='ss-btn'>访问 YACD-Clash 面板</button></a>");
+				//$("#yacd").html("<a type='button' href='http://yacd.haishan.me/?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target='_blank' >访问 YACD-Clash 面板</a>");
+				$("#yacd").html("<a type='button' href='http://"+ arr[2] + "/ext/yacd/index.html?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target='_blank' >访问 YACD-Clash 面板</a>");
+				//$("#yacd").html("<a type='button' style='vertical-align: middle;' id='yacd' class='ss_btn' style='cursor:pointer' href='http://yacd.haishan.me/?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target='_blank' >访问 YACD-Clash 面板</a>");
+				$("#razord").html("<a type='button' href='http://"+ arr[2] + "/ext/razord/index.html' target='_blank' >访问 RAZORD-Clash 面板</a>");
 			}
 		}
 	});
 }
+function dnsfilechange() {
+	var dbus_post = {};
+	dbus_post["merlinclash_rh_nameserver1"] = db_merlinclash["merlinclash_rh_nameserver1"] = E("merlinclash_rh_nameserver1").value;
+	dbus_post["merlinclash_rh_nameserver2"] = db_merlinclash["merlinclash_rh_nameserver2"] = E("merlinclash_rh_nameserver2").value;
+	dbus_post["merlinclash_rh_nameserver3"] = db_merlinclash["merlinclash_rh_nameserver3"] = E("merlinclash_rh_nameserver3").value;
+	dbus_post["merlinclash_rh_fallback1"] = db_merlinclash["merlinclash_rh_fallback1"] = E("merlinclash_rh_fallback1").value;
+	dbus_post["merlinclash_rh_fallback2"] = db_merlinclash["merlinclash_rh_fallback2"] = E("merlinclash_rh_fallback2").value;
+	dbus_post["merlinclash_rh_fallback3"] = db_merlinclash["merlinclash_rh_fallback3"] = E("merlinclash_rh_fallback3").value;
+	
+	dbus_post["merlinclash_rhp_nameserver1"] = db_merlinclash["merlinclash_rhp_nameserver1"] = E("merlinclash_rhp_nameserver1").value;
+	dbus_post["merlinclash_rhp_nameserver2"] = db_merlinclash["merlinclash_rhp_nameserver2"] = E("merlinclash_rhp_nameserver2").value;
+	dbus_post["merlinclash_rhp_nameserver3"] = db_merlinclash["merlinclash_rhp_nameserver3"] = E("merlinclash_rhp_nameserver3").value;
+	dbus_post["merlinclash_rhp_fallback1"] = db_merlinclash["merlinclash_rhp_fallback1"] = E("merlinclash_rhp_fallback1").value;
+	dbus_post["merlinclash_rhp_fallback2"] = db_merlinclash["merlinclash_rhp_fallback2"] = E("merlinclash_rhp_fallback2").value;
+	dbus_post["merlinclash_rhp_fallback3"] = db_merlinclash["merlinclash_rhp_fallback3"] = E("merlinclash_rhp_fallback3").value;
+	
+	dbus_post["merlinclash_fi_nameserver1"] = db_merlinclash["merlinclash_fi_nameserver1"] = E("merlinclash_fi_nameserver1").value;
+	dbus_post["merlinclash_fi_nameserver2"] = db_merlinclash["merlinclash_fi_nameserver2"] = E("merlinclash_fi_nameserver2").value;
+	dbus_post["merlinclash_fi_nameserver3"] = db_merlinclash["merlinclash_fi_nameserver3"] = E("merlinclash_fi_nameserver3").value;
+	dbus_post["merlinclash_fi_fallback1"] = db_merlinclash["merlinclash_fi_fallback1"] = E("merlinclash_fi_fallback1").value;
+	dbus_post["merlinclash_fi_fallback2"] = db_merlinclash["merlinclash_fi_fallback2"] = E("merlinclash_fi_fallback2").value;
+	dbus_post["merlinclash_fi_fallback3"] = db_merlinclash["merlinclash_fi_fallback3"] = E("merlinclash_fi_fallback3").value;
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_dnsfilechange.sh", "params":[], "fields": dbus_post};
+	dbus_post["action_script"] = "clash_dnsfilechange.sh";
+	dbus_post["action_mode"] = " Refresh ";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash",
+		data: $.param(dbus_post),
+		dataType: "text",
+		error: function(xhr) {
+			
+		},
+		success: function(response) {
+			refreshpage();	
+		}
+	});
+}
+function dnsfiles() {
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_dnsfiles.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=dnsfiles.log&script=clash_dnsfiles.sh",
+		dataType: 'html',
+		success: function(response) {
+			var arr = response.split("@");			
+			E("merlinclash_rh_nameserver1").value = arr[0];
+			E("merlinclash_rh_nameserver2").value = arr[1];
+			E("merlinclash_rh_nameserver3").value = arr[2];
+			E("merlinclash_rh_fallback1").value = arr[3];
+			E("merlinclash_rh_fallback2").value = arr[4];
+			E("merlinclash_rh_fallback3").value = arr[5];
+			E("merlinclash_rhp_nameserver1").value = arr[6];
+			E("merlinclash_rhp_nameserver2").value = arr[7];
+			E("merlinclash_rhp_nameserver3").value = arr[8];
+			E("merlinclash_rhp_fallback1").value = arr[9];
+			E("merlinclash_rhp_fallback2").value = arr[10];
+			E("merlinclash_rhp_fallback3").value = arr[11];
+			E("merlinclash_fi_nameserver1").value = arr[12];
+			E("merlinclash_fi_nameserver2").value = arr[13];
+			E("merlinclash_fi_nameserver3").value = arr[14];
+			E("merlinclash_fi_fallback1").value = arr[15];
+			E("merlinclash_fi_fallback2").value = arr[16];
+			E("merlinclash_fi_fallback3").value = arr[17];
+		}
+	});
+}
+function check_unblockneteasemusic_status(){
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_unblockmusic_status.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=unblockmusic_status.log&script=clash_unblockmusic_status.sh",
+		dataType: 'html',
+		success: function (response) {
+			var arr = response.split("@");
+			E("merlinclash_unblockmusic_status").innerHTML = arr[1];
+			E("merlinclash_unblockmusic_version").innerHTML = arr[0];
+							
+			setTimeout("check_unblockneteasemusic_status();", 10000);
+		},
+		error: function(){
+			E("merlinclash_unblockmusic_status").innerHTML = "获取运行状态失败";
+			E("merlinclash_unblockmusic_version").innerHTML = "获取插件版本失败";
+			setTimeout("check_unblockneteasemusic_status();", 5000);
+		}
+	});
+}
+function unblock_restart() {
+	var dbus_post = {};
+	dbus_post["merlinclash_unblockmusic_endpoint"] = db_merlinclash["merlinclash_unblockmusic_endpoint"] = E("merlinclash_unblockmusic_endpoint").value;
+	dbus_post["merlinclash_unblockmusic_musicapptype"] = db_merlinclash["merlinclash_unblockmusic_musicapptype"] = E("merlinclash_unblockmusic_musicapptype").value;	
+	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = "8"
+
+	push_data("clash_config.sh", "toolscript",  dbus_post);	
+}
+function downloadcert() {
+	window.open("http://"+window.location.hostname+"/ext/ca.crt");
+}
 function geoip_update(action){
 	var dbus_post = {};
+	var date = new Date();
+    var seperator1 = "-";
+    var seperator2 = ":";
+    var month = date.getMonth() + 1;
+    var strDate = date.getDate();
+    if (month >= 1 && month <= 9) {
+        month = "0" + month;
+    }
+    if (strDate >= 0 && strDate <= 9) {
+        strDate = "0" + strDate;
+    }
+    var currentdate = date.getFullYear() + seperator1 + month + seperator1 + strDate
+            + " " + date.getHours() + seperator2 + date.getMinutes()
+            + seperator2 + date.getSeconds();
 	require(['/res/layer/layer.js'], function(layer) {
 		layer.confirm('<li>你确定要更新GeoIP数据库吗？</li>', {
 			shade: 0.8,
 		}, function(index) {
 			$("#log_content3").attr("rows", "20");
 			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+			dbus_post["merlinclash_updata_date"] = db_merlinclash["merlinclash_updata_date"] = currentdate;
 			push_data("clash_update_ipdb.sh", "start", dbus_post);
+			E("geoip_updata_date").innerHTML = "<span style='color: gold'>上次更新时间："+db_merlinclash["merlinclash_updata_date"]+"</span>";
 			layer.close(index);
 			return true;
 		}, function(index) {
@@ -608,25 +962,56 @@ function geoip_update(action){
 		});
 	});
 }
-function yaml_select(){
-	//var id = parseInt(Math.random() * 100000000);
-	//var postData = {"id": id, "method": "clash_getyamls.sh", "params":[], "fields": ""};
+function clash_update(action){
 	var dbus_post = {};
-	dbus_post["action_script"] = "clash_getyamls.sh";
-	dbus_post["action_mode"] = " Refresh ";
-	$.ajax({
-		type: "POST",
-		url: "/applydb.cgi?p=merlinclash",
-		data: $.param(dbus_post),
-		dataType: "text",
-		success: function(response) {
-			//if(response.result == id){
-				yaml_select_get();
-			//}
-		}
+	var date = new Date();
+    var seperator1 = "-";
+    var seperator2 = ":";
+    var month = date.getMonth() + 1;
+    var strDate = date.getDate();
+    if (month >= 1 && month <= 9) {
+        month = "0" + month;
+    }
+    if (strDate >= 0 && strDate <= 9) {
+        strDate = "0" + strDate;
+    }
+    var currentdate = date.getFullYear() + seperator1 + month + seperator1 + strDate
+            + " " + date.getHours() + seperator2 + date.getMinutes()
+            + seperator2 + date.getSeconds();
+	require(['/res/layer/layer.js'], function(layer) {
+		layer.confirm('<li>你确定要更新clash二进制吗？</li>', {
+			shade: 0.8,
+		}, function(index) {
+			$("#log_content3").attr("rows", "20");
+			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+			dbus_post["merlinclash_update_clashdate"] = db_merlinclash["merlinclash_update_clashdate"] = currentdate;
+			push_data("clash_update_clashbinary.sh", "restart", dbus_post);
+			E("clash_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_clashdate"]+"</span>";
+			layer.close(index);
+			return true;
+			
+		}, function(index) {
+			layer.close(index);
+			return false;
+		});
 	});
 }
-function yaml_select_get() {
+function clash_getversion(action) {
+	var dbus_post = {};
+	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+	push_data("clash_get_binary_history.sh", "start", dbus_post);
+}
+function clash_replace(action) {
+	if(!$.trim($('#merlinclash_clashbinarysel').val())){
+		alert("请选择二进制版本");
+		return false;
+	}
+	var dbus_post = {};
+	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+	dbus_post["merlinclash_clashbinarysel"] = db_merlinclash["merlinclash_clashbinarysel"] = E("merlinclash_clashbinarysel").value;
+	push_data("clash_get_binary_history.sh", "restart", dbus_post);
+}
+function yaml_select(){
 	$.ajax({
 		url: '/logreaddb.cgi?p=yamls.txt',
 		type: 'GET',
@@ -639,12 +1024,13 @@ function yaml_select_get() {
 		}
 	});
 }
+
 var counts;
 counts=0;
 function Myselect(arr){
 	var i;
 	counts=arr.length;
-	var yamllist = arr;  
+	var yamllist = arr;  
 	$("#merlinclash_yamlsel").append("<option value=''>--请选择--</option>");
 	$("#merlinclash_delyamlsel").append("<option value=''>--请选择--</option>");
 	for(i=0;i<yamllist.length-1;i++){
@@ -652,6 +1038,154 @@ function Myselect(arr){
 		$("#merlinclash_yamlsel").append("<option value='"+a+"' >"+a+"</option>");
 		$("#merlinclash_delyamlsel").append("<option value='"+a+"' >"+a+"</option>");
 	}
+}
+function clashbinary_select(){	
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_getclashbinary.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=clash_binary_history.txt",
+		dataType: 'html',
+		success: function(response) {
+			//if(response.result == id){
+				var arr = response.split("\n");
+				Myclashbinary(arr);
+			//}
+		}
+	});
+}
+var binarys;
+binarys=0;
+function Myclashbinary(arr){
+	var k;
+	binarys=arr.length;
+	var binarylist = arr;  	
+	$("#merlinclash_clashbinarysel").append("<option value=''>------------请选择------------</option>");
+	for(k=0;k<binarylist.length;k++){
+		var a=binarylist[k];
+		$("#merlinclash_clashbinarysel").append("<option value='"+a+"' >"+a+"</option>");
+	}
+}
+function proxygroup_select(){
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_getproxygroup.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=proxygroups.txt",
+		dataType: 'html',
+		success: function(response) {
+			//if(response.result == id){
+				var arr = response.split("\n");
+				Mypgselect(arr);
+			//}
+		}
+	});
+}
+var pgcounts;
+pgcounts=0;
+function Mypgselect(arr){
+	var i;
+	pgcounts=arr.length;
+	var pglist = arr;  
+	   	$("#merlinclash_pgnodes_proxygroup").append("<option value=''>--请选择--</option>");
+	for(i=0;i<pglist.length-1;i++){
+		var a=pglist[i];
+		$("#merlinclash_pgnodes_proxygroup").append("<option value='"+a+"' >"+a+"</option>");
+	}
+}
+function nproxygroup_select_get(node) {
+	$.ajax({
+		url: '/logreaddb.cgi?p=proxygroups.txt',
+		dataType: 'html',
+		success: function(response) {
+			//按换行符切割
+			var arr = response.split("\n");
+			//alert(node);
+			nMypgselect(arr,node);
+		}
+	});
+}
+function nproxies_select_get(node) {
+	$.ajax({
+		url: '/logreaddb.cgi?p=proxies.txt',
+		dataType: 'html',
+		success: function(response) {
+			//按换行符切割
+			var arr = response.split("\n");
+			//alert(node);
+			nMypxselect(arr,node);
+		}
+	});
+}
+function nMypgselect(arr,node){
+	var npgcounts;
+	var i;
+	npgcounts=arr.length;
+	var p = "merlinclash_npgnodes";
+	var pgnodes = {};
+	var params = ["proxygroup"];
+	for (var j = 0; j < params.length; j++) {
+		$("#pgnodes_tr_" + node + " input[name='"+ p +"_" + params[j] + "_" + node+ "']").each(function () {
+			pgnodes[p + "_" + params[j] + "_" + node] = this.value;
+		});
+	}
+	//alert(pgnodes[p + "_" + params[0] + "_" + node]);
+	var b = pgnodes[p + "_" + params[0] + "_" + node];
+	var npglist = arr;  
+	//$("#merlinclash_pgnodes_proxygroup_" + node).append("<option value=''>--请选择--</option>");
+
+	for(i=0;i<npglist.length-1;i++){
+		var a=npglist[i];
+		$("#merlinclash_pgnodes_proxygroup_" + node).append("<option value='"+a+"' >"+a+"</option>");
+	}
+	$("#merlinclash_pgnodes_proxygroup_"+node).find("option[value = '"+b+"']").attr("selected","selected");
+}
+function nMypxselect(arr,node){
+	var npxcounts;
+	var i;
+	npxcounts=arr.length;
+	var p = "merlinclash_npgnodes";
+	var pxnodes = {};
+	var params = ["nodesel"];
+	for (var j = 0; j < params.length; j++) {
+		$("#pgnodes_tr_" + node + " input[name='"+ p +"_" + params[j] + "_" + node+ "']").each(function () {
+			pxnodes[p + "_" + params[j] + "_" + node] = this.value;
+		});
+	}
+	//alert(pxnodes[p + "_" + params[0] + "_" + node]);
+	var c = pxnodes[p + "_" + params[0] + "_" + node];
+	var npglist = arr;  
+	//$("#merlinclash_pgnodes_nodesel_" + node).append("<option value=''>--请选择--</option>");
+	
+	for(i=0;i<npglist.length-1;i++){
+		var a=npglist[i];
+		$("#merlinclash_pgnodes_nodesel_" + node).append("<option value='"+a+"' >"+a+"</option>");	
+	}
+	$("#merlinclash_pgnodes_nodesel_"+node).find("option[value = '"+c+"']").attr("selected","selected");
+
+}
+function proxies_select(){
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "clash_getproxies.sh", "params":[], "fields": ""};
+	$.ajax({
+		url: "/logreaddb.cgi?p=proxies.txt",
+		dataType: 'html',
+		success: function(response) {
+			//if(response.result == id){
+			var arrb = response.split("\n");
+			Mypxselect(arrb);
+			//}
+		}
+	});
+}
+pxcounts=0;
+function Mypxselect(arrb){
+	var i;
+	pxcounts=arrb.length;
+	var pxlist = arrb;  
+		$("#merlinclash_pgnodes_nodesel").append("<option value=''>--请选择--</option>");
+	for(i=0;i<pxlist.length-1;i++){
+		var a=pxlist[i];
+		$("#merlinclash_pgnodes_nodesel").append("<option value='"+a+"' >"+a+"</option>");
+	    }
 }
 function refresh_acl_table(q) {
 	$.ajax({
@@ -993,9 +1527,12 @@ function refresh_kcp_html() {
 				code2 += '<input type="text" id="merlinclash_kcp_param_' + kc["kcp_node"] +' "name="merlinclash_kcp_param_' + kc["kcp_node"] +'" class="input_option_2" maxlength="5000" style="width:90%;text-align:center;" value="' + kc["param"] +'" />'
 				code2 += '</td>';
 			code2 += '<td width="20%">';
-				code2 += '<input style="width:60px" id="kcp_nodes_' + kc["kcp_node"] + '" class="ss_btn" type="button" onclick="saveTrkcp(this);" value="保存">'
+				code2 += '<input style="margin: 0px 0px -4px -2px;" id="kcp_nodes_' + kc["kcp_node"] + '" class="edit_btn" type="button" onclick="saveTrkcp(this);" value="">'
 				code2 += ' '
-				code2 += '<input style="width:60px" id="kcp_noded_' + kc["kcp_node"] + '" class="ss_btn" type="button" onclick="delTrkcp(this);" value="删除">'
+				code2 += '<input style="margin: 0px 0px -4px -2px;" id="kcp_noded_' + kc["kcp_node"] + '" class="remove_btn" type="button" onclick="delTrkcp(this);" value="">'
+				//code2 += '<input style="width:60px" id="kcp_nodes_' + kc["kcp_node"] + '" class="ss_btn" type="button" onclick="saveTrkcp(this);" value="保存">'
+				//code2 += ' '
+				//code2 += '<input style="width:60px" id="kcp_noded_' + kc["kcp_node"] + '" class="ss_btn" type="button" onclick="delTrkcp(this);" value="删除">'
 			code2 += '</td>';
 		code2 += '</tr>';
 	}
@@ -1037,6 +1574,294 @@ function getkcpConfigs() {
 		}
 	}
 	return kcp_confs;
+}
+function getpgnodesmax(){
+	$.ajax({
+		type: "GET",
+		url: "dbconf?p=merlinclash_pgnodes",
+		dataType: "script",
+		success: function(data) {
+			db_pgnodes = db_merlinclash_pgnodes;
+			getpgnodesConfigs();
+			//after table generated and value filled, set default value for first line_image1
+		}
+	});
+}
+function refresh_pgnodes_table(q) {
+	$.ajax({
+		type: "GET",
+		url: "dbconf?p=merlinclash_pgnodes",
+		dataType: "script",
+		success: function(data) {
+			db_pgnodes = db_merlinclash_pgnodes;
+			refresh_pgnodes_html();
+				
+			//write dynamic table value
+			for (var i = 1; i < pgnodes_node_max + 1; i++) {
+				$('#merlinclash_pgnodes_proxygroup_' + i).val(db_acl["merlinclash_pgnodes_proxygroup_" + i]);
+				$('#merlinclash_pgnodes_nodesel_' + i).val(db_acl["merlinclash_pgnodes_nodesel_" + i]);
+
+			}
+			//after table generated and value filled, set default value for first line_image1
+		}
+	});
+}
+function addTrpgnodes() {
+	if(!$.trim($('#merlinclash_pgnodes_proxygroup').val())){
+		alert("Proxy-Group不能为空！");
+		return false;
+	}
+	if(!$.trim($('#merlinclash_pgnodes_nodesel').val())){
+		alert("节点不能为空！");
+		return false;
+	}
+	var pgnodes = {};
+	var p = "merlinclash_pgnodes";
+	pgnodes_node_max += 1;
+	var params = ["proxygroup", "nodesel"];
+	for (var i = 0; i < params.length; i++) {
+		pgnodes[p + "_" + params[i] + "_" + pgnodes_node_max] = $('#' + p + "_" + params[i]).val();
+		
+	}
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
+	pgnodes["action_script"] = "dummy_script.sh";
+	pgnodes["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_pgnodes",
+		data: $.param(pgnodes),
+		dataType: "text",
+		error: function(xhr) {
+			console.log("error in posting config of table");
+		},
+		success: function(response) {
+			refresh_pgnodes_table();
+			E("merlinclash_pgnodes_proxygroup").value = "";
+			E("merlinclash_pgnodes_nodesel").value = "";
+			proxygroup_select();
+			proxies_select();
+		}
+	});
+	pgnodespid = 0;
+}
+function saveTrpgnodes(o) {
+	var id = $(o).attr("id"); 
+	var ids = id.split("_");
+	var p = "merlinclash_npgnodes";
+	var q = "merlinclash_pgnodes";
+	id = ids[ids.length - 1];
+	var pgnodes = {};
+	var params = ["proxygroup", "nodesel"];
+
+
+	for (var i = 0; i < params.length; i++) {
+		$("#pgnodes_tr_" + id + " input[name='"+ p +"_" + params[i] + "_" + id+ "']").each(function () {
+			pgnodes[q + "_" + params[i] + "_" + id] = $("#merlinclash_pgnodes_"+ params[i] + "_" +id).val();
+		//	alert($("#merlinclash_pgnodes_"+ params[i] + "_" +id).val());
+		//	alert(pgnodes[q + "_" + params[i] + "_" + id]);
+		});
+	}
+	//alert(pgnodes[q + "_" + params[1] + "_" + id]);
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
+	pgnodes["action_script"] = "dummy_script.sh";
+	pgnodes["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_pgnodes",
+		data: $.param(pgnodes),
+		dataType: "text",
+		success: function(response) {		
+			refresh_pgnodes_table();
+			refreshpage();
+		}
+	});	
+}
+function delTrpgnodes(o) {
+	var id = $(o).attr("id");
+	var ids = id.split("_");
+	var p = "merlinclash_pgnodes";
+	id = ids[ids.length - 1];
+	var pgnodes = {};
+	var params = ["proxygroup", "nodesel"];
+	for (var i = 0; i < params.length; i++) {
+		pgnodes[p + "_" + params[i] + "_" + id] = "";
+	}
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
+	pgnodes["action_script"] = "dummy_script.sh";
+	pgnodes["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_pgnodes",
+		data: $.param(pgnodes),
+		dataType: "text",
+		success: function(response) {		           
+			refresh_pgnodes_table();
+			refreshpage();
+		}
+	});
+}
+function delallpgnodes() {
+		getpgnodesmax();
+		if(pgnodes_node_max != "undefined"){
+			var p = "merlinclash_pgnodes";
+			pgnodes_node_del = pgnodes_node_max;
+			var pgnodes = {};
+			var params = ["proxygroup", "nodesel"];
+			for (var j=pgnodes_node_del; j>0; j--) {
+				for (var i = 0; i < params.length; i++) {
+					pgnodes[p + "_" + params[i] + "_" + j] = "";		
+				}
+			}
+			pgnodes_node_max = 0;
+			//var id = parseInt(Math.random() * 100000000);
+			//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
+
+	pgnodes["action_script"] = "dummy_script.sh";
+	pgnodes["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_pgnodes",
+		data: $.param(pgnodes),
+		dataType: "text",
+				success: function(response) {		           
+					refresh_pgnodes_table();
+					refreshpage();
+				}
+			});	
+		}
+			
+}
+function apply_delallpgnodes() {
+		getpgnodesmax();
+		if(pgnodes_node_max != null){
+			var p = "merlinclash_pgnodes";
+			pgnodes_node_del = pgnodes_node_max;
+			//alert(pgnodes_node_del);
+			var pgnodes = {};
+			var params = ["proxygroup", "nodesel"];
+			for (var j=pgnodes_node_del; j>0; j--) {
+				for (var i = 0; i < params.length; i++) {
+					db_merlinclash["merlinclash_pgnodes_" + params[i] + "_" + j] = pgnodes["merlinclash_pgnodes_" + params[i] + "_" + j] = "";
+					db_merlinclash["merlinclash_npgnodes_" + params[i] + "_" + j] = pgnodes["merlinclash_npgnodes_" + params[i] + "_" + j] = "";
+					//alert("a"+pgnodes[p + "_" + params[i] + "_" + j]);		
+				}
+			}
+			pgnodes_node_max = 0;
+			var id = parseInt(Math.random() * 100000000);
+			var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
+	pgnodes["action_script"] = "dummy_script.sh";
+	pgnodes["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_pgnodes",
+		data: $.param(pgnodes),
+		dataType: "text",
+				success: function(response) {
+					//alert("b"+pgnodes["merlinclash_pgnodes_proxygroup_1"]);
+					//alert("c"+pgnodes["merlinclash_npgnodes_proxygroup_1"]);
+					refresh_pgnodes_table();
+					//alert('检测到配置文件变化，将清空前配置节点指定内容');
+				}
+			});	
+		}
+			
+}
+function refresh_pgnodes_html() {
+	pgnodes_confs = getpgnodesConfigs();
+	var code2 = '';
+	//table th
+	code2 += '<table width="750px" border="0" align="center" cellpadding="4" cellspacing="0" class="FormTable_table pgnodes_lists" style="margin:-1px 0px 0px 0px;">'
+		code2 += '<tr>'
+			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">Proxy-Group</th>'
+			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">节点</th>'
+			code2 += '<th width="20%">操作</th>'
+		code2 += '</tr>'
+	code2 += '</table>'
+	// table input area
+	code2 += '<table id="PGNODES_table" width="750px" border="0" align="center" cellpadding="4" cellspacing="0" class="list_table pgnodes_lists" style="margin:-1px 0px 0px 0px;">'
+		code2 += '<tr>'
+	//Proxy-Group
+			code2 += '<td width="40%">'
+				code2 += '<select id="merlinclash_pgnodes_proxygroup" style="width:140px;margin:0px 0px 0px 2px;text-align:center;text-align-last:center;padding-left: 12px;" class="input_option">'
+				code2 += '</select>'
+			code2 += '</td>'
+	//节点
+			code2 += '<td width="40%">'
+				code2 += '<select id="merlinclash_pgnodes_nodesel" style="width:140px;margin:0px 0px 0px 2px;text-align:center;text-align-last:center;padding-left: 12px;" class="input_option">'
+				code2 += '</select>'
+			code2 += '</td>'	
+	// add/delete 按钮
+			code2 += '<td width="20%">'
+				code2 += '<input style="margin-left: 6px;margin: -2px 0px -4px -2px;" type="button" class="add_btn" onclick="addTrpgnodes()" value="" />'
+			code2 += '</td>'
+		code2 += '</tr>'
+	// kcp table data area
+	for (var field in pgnodes_confs) {
+		var pc = pgnodes_confs[field];		
+		code2 += '<tr id="pgnodes_tr_' + pc["pgnodes_node"] + '">';
+			code2 += '<td width="40%">'
+				code2 += '<input type="hidden" id="merlinclash_npgnodes_proxygroup_' + pc["pgnodes_node"] +' " name="merlinclash_npgnodes_proxygroup_' + pc["pgnodes_node"] +'" class="input_option_2" maxlength="6" style="width:80%;text-align:center;" value="' + pc["proxygroup"] +'" />'
+				code2 += '<select id="merlinclash_pgnodes_proxygroup_'+ pc["pgnodes_node"] + '" name="merlinclash_pgnodes_proxygroup_' + pc["pgnodes_node"] +'" style="width:140px;margin:0px 0px 0px 2px;text-align:center;text-align-last:center;padding-left: 12px;" class="input_option">'
+				code2 += '</select>'
+			code2 += '</td>';
+			code2 += '<td width="40%">'
+				code2 += '<input type="hidden" id="merlinclash_npgnodes_nodesel_' + pc["pgnodes_node"] +' " name="merlinclash_npgnodes_nodesel_' + pc["pgnodes_node"] +'" class="input_option_2" maxlength="20" style="width:90%;text-align:center;" value="' + pc["nodesel"] +'" />'
+				code2 += '<select id="merlinclash_pgnodes_nodesel_'+ pc["pgnodes_node"] + '" name="merlinclash_pgnodes_nodesel_' + pc["pgnodes_node"] +'" style="width:140px;margin:0px 0px 0px 2px;text-align:center;text-align-last:center;padding-left: 12px;" class="input_option">'
+				code2 += '</select>'
+			code2 += '</td>';
+			code2 += '<td width="20%">';
+				code2 += '<input style="margin: 0px 0px -4px -2px;" id="pgnodes_nodes_' + pc["pgnodes_node"] + '" class="edit_btn" type="button" onclick="saveTrpgnodes(this);" value="">'
+				code2 += ' '
+				code2 += '<input style="margin: 0px 0px -4px -2px;" id="pgnodes_noded_' + pc["pgnodes_node"] + '" class="remove_btn" type="button" onclick="delTrpgnodes(this);" value="">'
+				//code2 += '<input style="width:60px" id="pgnodes_nodes_' + pc["pgnodes_node"] + '" class="ss_btn" type="button" onclick="saveTrpgnodes(this);" value="保存">'
+				//code2 += ' '
+				//code2 += '<input style="width:60px" id="pgnodes_noded_' + pc["pgnodes_node"] + '" class="ss_btn" type="button" onclick="delTrpgnodes(this);" value="删除">'
+			code2 += '</td>';
+		code2 += '</tr>';
+		nproxygroup_select_get(pc["pgnodes_node"]);
+		nproxies_select_get(pc["pgnodes_node"]);
+	}
+	code2 += '</table>';
+
+	$(".pgnodes_lists").remove();
+	$('#merlinclash_pgnodes_table').after(code2);
+
+}
+function getpgnodesConfigs() {
+	var dictpgnodes = {};
+	pgnodes_node_max = 0;
+	for (var field in db_pgnodes) {
+		pgnodesnames = field.split("_");
+		
+		dictpgnodes[pgnodesnames[pgnodesnames.length - 1]] = 'ok';
+	}
+	pgnodes_confs = {};
+	var p = "merlinclash_pgnodes";
+	var params = ["proxygroup", "nodesel"];
+	for (var field in dictpgnodes) {
+		var obj = {};
+		for (var i = 0; i < params.length; i++) {
+			var ofield = p + "_" + params[i] + "_" + field;
+			if (typeof db_pgnodes[ofield] == "undefined") {
+				obj = null;
+				break;
+			}
+			obj[params[i]] = db_pgnodes[ofield];
+			
+		}
+		if (obj != null) {
+			var node_a = parseInt(field);
+			if (node_a > pgnodes_node_max) {
+				pgnodes_node_max = node_a;
+			}
+			obj["pgnodes_node"] = field;
+			pgnodes_confs[field] = obj;
+		}
+	}
+	return pgnodes_confs;
 }
 </script>
 <script>
@@ -1241,13 +2066,15 @@ function menu_hook(title, tab) {
 											<table style="margin:10px 0px 0px 0px;border-collapse:collapse" width="100%" height="37px">
 												<tr>
 													<td cellpadding="0" cellspacing="0" style="padding:0" border="1" bordercolor="#222">
-														<input id="show_btn0" class="show-btn0" width="16%" style="cursor:pointer" type="button" value="首页功能" />
-														<input id="show_btn1" class="show-btn1" width="16%" style="cursor:pointer" type="button" value="配置文件" />
-														<input id="show_btn2" class="show-btn2" width="16%" style="cursor:pointer" type="button" value="自定规则" />
-														<input id="show_btn3" class="show-btn3" width="16%" style="cursor:pointer" type="button" value="高级模式" />
-														<input id="show_btn4" class="show-btn4" width="16%" style="cursor:pointer" type="button" value="附加功能" />
-														<input id="show_btn5" class="show-btn5" width="16%" style="cursor:pointer" type="button" value="操作日志" />
-														<input id="show_btn6" class="show-btn6" width="16%" style="cursor:pointer" type="button" value="当前配置" />
+														<input id="show_btn0" class="show-btn0" width="11%" style="cursor:pointer" type="button" value="首页功能" />
+														<input id="show_btn1" class="show-btn1" width="11%" style="cursor:pointer" type="button" value="配置文件" />
+														<input id="show_btn7" class="show-btn7" width="11%" style="cursor:pointer" type="button" value="节点指定" />
+														<input id="show_btn2" class="show-btn2" width="11%" style="cursor:pointer" type="button" value="自定规则" />
+														<input id="show_btn3" class="show-btn3" width="11%" style="cursor:pointer" type="button" value="高级模式" />
+                                                        <input id="show_btn8" class="show-btn8" width="11%" style="cursor:pointer" type="button" value="云村解锁" />
+														<input id="show_btn4" class="show-btn4" width="11%" style="cursor:pointer" type="button" value="附加功能" />
+														<input id="show_btn5" class="show-btn5" width="11%" style="cursor:pointer" type="button" value="操作日志" />
+														<input id="show_btn6" class="show-btn6" width="11%" style="cursor:pointer" type="button" value="当前配置" />
 													</td>
 												</tr>
 											</table>
@@ -1339,9 +2166,10 @@ function menu_hook(title, tab) {
 																	</label>
 																	<p style="color:#FC0">&nbsp;</p>
 																	<p style="color:#FC0">&nbsp;注意：1.如果您没有足够的自信，请不要使用默认DNS方案。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.Reidr-Host，国内解析优先，但DNS可能被污染。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.Reidr-Host+，解析速度可能较慢，DNS基本无污染。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.Fake-ip，拒绝DNS污染，无法通过ping获得真实IP。<a href="https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank"><em><u>相关说明</u></em></a></p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.Reidr-Host，国内解析优先，但DNS可能被污染。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.Reidr-Host+，解析速度可能较慢，DNS基本无污染。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.Fake-ip，拒绝DNS污染，无法通过ping获得真实IP。<a href="https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank"><em><u>相关说明</u></em></a></p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Fake-ip模式暂不兼容KoolProxy，切忌在此模式下升级路由固件)。</p>
 																</td>
 														</tr>
 													</table>
@@ -1364,12 +2192,23 @@ function menu_hook(title, tab) {
 														<th id="btn-open-clash-dashboard" class="btn btn-primary">访问 Clash 面板</th>
 															<td colspan="2">
 																<div class="merlinclash-btn-container">
-																	<a href="http://yacd.haishan.me/" target="_blank" id="yacd" ><button type="button" class="btn btn-primary">访问 YACD-Clash 面板</button></a>
-																	<a href="http://clash.razord.top/" target="_blank" id="razord" ><button type="button" class="btn btn-primary">访问 RAZORD-Clash 面板</button></a>
+																	<!--<a href="http://yacd.haishan.me/" target="_blank" id="yacd" ><button type="button" class="ss-btn">访问 YACD-Clash 面板</button></a>
+																	<a href="http://clash.razord.top/" target="_blank" id="yacd" ><button type="button" class="ss-btn">访问 RAZORD-Clash 面板</button></a>-->
+																	<a type="button" style="vertical-align: middle; cursor:pointer;" id="yacd" class="ss_btn" href="http://yacd.haishan.me/" target="_blank" >访问 YACD-Clash 面板</a>
+																	<a type="button" style="vertical-align: middle; cursor:pointer;" class="ss_btn" id="razord" href="http://clash.razord.top/" target="_blank">访问 RAZORD-Clash 面板</a>
+																	
 																	<p style="margin-top: 8px">只有在 Clash 正在运行的时候才可以访问 Clash 面板</p>
 																</div>
 															</td>
 														</tr>
+														<tr>
+															<th id="btn-quicklyrestart" class="btn btn-primary">快速重启</th>
+																<td colspan="2">
+																	<div class="merlinclash-btn-quicklyrestart">																	
+																		<a type="button" style="vertical-align: middle; cursor:pointer;" class="ss_btn" id="quicklyrestart" onclick="quickly_restart()">&nbsp;&nbsp;快速重启&nbsp;&nbsp;</a><a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(7)"><em style="color: gold;">【功能说明】</em></a>														
+																	</div>
+																</td>
+															</tr>
 												</table>
 											</div>
 										</div>
@@ -1382,12 +2221,14 @@ function menu_hook(title, tab) {
 													</tr>
 													</thead>
 													<tr>
-													<th id="btn-open-clash-dashboard" class="btn btn-primary">手动上传Clash配置文件</th>
-														<td colspan="2">
+													<th id="btn-open-clash-dashboard" class="btn btn-primary">手动上传Clash配置文件 <p style="color: red;">文件名必须为字母/数字！</p></th>
+													<td colspan="2">
+														<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
 															<input type="file" id="clashconfig" size="50" name="file"/>
-															<span id="clashconfig_info" style="display:none;">完成</span>
-															<button id="clashconfig-btn-upload" type="button" onclick="upload_clashconfig();" class="btn btn-primary">上传配置文件</button>
-														</td>
+															<span id="clashconfig_info" style="display:none;">完成</span>															
+															<a type="button" style="vertical-align: middle; cursor:pointer;" id="clashconfig-btn-upload" class="ss_btn" onclick="upload_clashconfig()" >上传配置文件</a>
+														</div>
+													</td>
 													</tr>
 													<tr>
 														<th><br>在线Clash订阅
@@ -1400,7 +2241,7 @@ function menu_hook(title, tab) {
 																	<textarea id="merlinclash_links" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
 																</label>
 															</div>
-															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
 																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename" maxlength="8" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字/字母">
 																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml(2)" href="javascript:void(0);">&nbsp;&nbsp;Clash订阅&nbsp;&nbsp;</a>
 																</div>
@@ -1428,7 +2269,7 @@ function menu_hook(title, tab) {
 																	<textarea id="merlinclash_links2" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
 																</label>
 															</div>
-															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
 																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="8" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字/字母">
 																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
 															</div>
@@ -1447,7 +2288,7 @@ function menu_hook(title, tab) {
 																	<textarea id="merlinclash_links3" placeholder="&nbsp;&nbsp;&nbsp;请输入订阅连接（只支持单个订阅地址）" type="text" style="color: #FFFFFF; height:100px; width:400px;background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;"></textarea>
 																</label>
 															</div>														
-															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 100px; margin:-40px 0;">
+															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
 																<select id="merlinclash_acl4ssrsel" style="width:140px;margin:0px 0px 0px 2px;text-align:left;padding-left: 0px;" class="input_option">
 																	<option value="Online">Online默认版_分组比较全</option>
 																	<option value="AdblockPlus">AdblockPlus_更多去广告</option>	
@@ -1465,6 +2306,24 @@ function menu_hook(title, tab) {
 														</td>
 													</tr>
 												</table>
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
+													<thead>
+														<tr>
+															<td colspan="2">导入【<a href=" ./Module_shadowsocks.asp" target="_blank"><em style="color:gold;">科学上网</em></a> 】节点</td>
+														</tr>
+														</thead>
+													<tr id="ssconvert">
+														<th>读取科学上网节点，转换为Clash规则</th>
+															<td colspan="2">
+																<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename3" maxlength="8" style="color: #FFFFFF; width: 180px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;转换文件命名,支持8位数字/字母">
+																<label for="merlinclash_ssconvert_btn">
+																	<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="ssconvert(6)" href="javascript:void(0);">&nbsp;&nbsp;一键转换&nbsp;&nbsp;</a>																
+																</label>
+															</div>
+															</td>
+													</tr>
+												</table>
 												<form name="form1">
 													<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
 														<thead>
@@ -1474,15 +2333,27 @@ function menu_hook(title, tab) {
 															</thead>
 														<tr id="delyamlselect">
 															<th>配置文件选择</th>
-																<td colspan="2">
-																	<!--<input type="hidden" value="${stu.merlinclash_yamlsel}" id="yamlfile" />-->
-																	<select id="merlinclash_delyamlsel"  name="delyamlsel" dataType="Notnull" msg="配置文件不能为空!"></select>
-																	<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="download_yaml_sel()" href="javascript:void(0);">下载</a>
-																	<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="del_yaml_sel(0)" href="javascript:void(0);" >删除</a>
-																</td>
+															<td colspan="2">
+																<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
+																<!--<input type="hidden" value="${stu.merlinclash_yamlsel}" id="yamlfile" />-->
+																<select id="merlinclash_delyamlsel"  name="delyamlsel" dataType="Notnull" msg="配置文件不能为空!"></select>
+																<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="download_yaml_sel()" href="javascript:void(0);">下载</a>
+																<a type="button" style="vertical-align: middle;" class="ss_btn" style="cursor:pointer" onclick="del_yaml_sel(0)" href="javascript:void(0);" >删除</a>
+															</div>
+															</td>
 														</tr>
 													</table>
 													</form>
+											</div>				
+										</div>
+										<!--节点指定-->
+										<div id="tablet_7" style="display: none;">
+											<div id="merlinclash_pgnodes_table">
+											</div>												
+											<div id="MEMO_note" style="margin:10px 0 0 5px">
+											<div><i>&nbsp;&nbsp;1.该功能可以设定Clash初始策略组配置，仅对当前配置文件有效</i></div>
+											<div><i>&nbsp;&nbsp;2.如果您的设置不符合Clash的标准，进程会无法启动。请删除所有配置，重新尝试。</i></div>
+											<div><i>&nbsp;</i></div>
 											</div>				
 										</div>
 										<!--自定规则-->
@@ -1520,15 +2391,16 @@ function menu_hook(title, tab) {
 													</tr>
 												</table>
 											</div>
+											<!--
 											<div id="merlinclash-neteasemusic" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
 													<thead>
 														<tr>
-															<td colspan="2">网易云解锁 -- <a href='https://github.com/DesperadoJ/Rules-for-UnblockNeteaseMusic' target="_blank"><em style="color: gold;">【感谢DesperadoJ提供的解锁服务器】</em></a></td>
+															<td colspan="2">网易云音乐解锁 --服务器解锁 <a href='https://github.com/DesperadoJ/Rules-for-UnblockNeteaseMusic' target="_blank"><em style="color: gold;">【感谢DesperadoJ提供的解锁服务器】</em></a></td>
 														</tr>
 														</thead>
 													<tr id="neteasemusic">
-														<th>开启网易云解锁</th>
+														<th>开启网易云音乐解锁</th>
 															<td colspan="2">
 																<label for="merlinclash_nmswitch">
 																	<input id="merlinclash_nmswitch" type="checkbox" name="unblockneteasemusic" >
@@ -1537,6 +2409,25 @@ function menu_hook(title, tab) {
 													</tr>
 												</table>
 											</div>
+											
+											<div id="merlinclash-koolproxy" style="margin:-1px 0px 0px 0px;">
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
+													<thead>
+														<tr>
+															<td colspan="2">兼容koolproxy --【仅限FAKE-IP模式】</td>
+														</tr>
+														</thead>
+													<tr id="koolproxy">
+														<th>开启koolproxy兼容</th>
+															<td colspan="2">
+																<label for="merlinclash_kpswitch">
+																	<input id="merlinclash_kpswitch" type="checkbox" name="koolproxy_compatible;" >
+																</label>
+															</td>
+													</tr>
+												</table>
+											</div>
+											-->
 											<div id="merlinclash-content-config" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 													<thead>
@@ -1564,24 +2455,102 @@ function menu_hook(title, tab) {
 												<div id="merlinclash_kcp_table">
 												</div>
 											</div>	
-											<div id="merlinclash-ssconvert" style="margin:-1px 0px 0px 0px;">
+											
+										</div>
+										<!--网易云解锁-->
+										<div id="tablet_8" style="display: none;">
+											<div id="merlinclash-unblockneteasemusic" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
 													<thead>
 														<tr>
-															<td colspan="2">导入【<a href=" ./Module_shadowsocks.asp" target="_blank"><em style="color:gold;">科学上网</em></a> 】节点</td>
+															<td colspan="2">设置</td>
 														</tr>
 														</thead>
-													<tr id="ssconvert">
-														<th>读取科学上网节点，转换为Clash规则</th>
+														<tr>
+															<th >本地解锁开关</th>
 															<td colspan="2">
-																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename3" maxlength="8" style="color: #FFFFFF; width: 180px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;转换文件命名,支持8位数字/字母">
-																<label for="merlinclash_ssconvert_btn">
-																	<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="ssconvert(6)" href="javascript:void(0);">&nbsp;&nbsp;一键转换&nbsp;&nbsp;</a>																
+																<div class="switch_field" style="display:table-cell;float: left;">
+																	<label for="merlinclash_unblockmusic_enable">
+																		<input id="merlinclash_unblockmusic_enable" class="switch" type="checkbox" style="display: none;">
+																		<div class="switch_container">
+																			<div class="switch_bar"></div>
+																			<div class="switch_circle transition_style">
+																				<div></div>
+																			</div>
+																		</div>
+																	</label>
+																</div>
+															</td>
+														</tr>
+														<tr>
+															<th >插件版本</th>
+															<td colspan="2"  id="merlinclash_unblockmusic_version">
+															</td>
+														</tr>
+														<tr>
+															<th >状态</th>
+															<td colspan="2"  id="merlinclash_unblockmusic_status">
+															</td>
+														</tr>
+														<tr id="merlinclash_unblockmusic_musicapptype_tr">
+															<th>
+																<label >音源</label>
+															</th>
+															<td>
+																<div style="float:left; width:165px; height:25px">
+																	<select id="merlinclash_unblockmusic_musicapptype" name="merlinclash_unblockmusic_musicapptype" style="width:164px;margin:0px 0px 0px 2px;" class="input_option">
+																		<option value="default" >Default</option>
+																		<option value="netease" >Netease</option>
+																		<option value="qq" >QQ</option>
+																		<option value="xiami" >Xiami</option>
+																		<option value="baidu" >Baidu</option>
+																		<option value="kugou" >Kugou</option>
+																		<option value="kuwo" >Kuwo</option>
+																		<option value="migu" >Migu</option>
+																		<option value="joox" >Joox</option>
+																	</select>
+																</div>
+															</td>
+														</tr>
+														<tr id="merlinclash_unblockmusic_endpoint_tr">
+															<th>
+																<label >Endpoint</label>
+															</th>
+															<td>
+																<input type="text" id="merlinclash_unblockmusic_endpoint" name="merlinclash_unblockmusic_endpoint" class="input_ss_table" style="width:200px;" value="https://music.163.com" />
+															</td>
+														</tr>
+														<tr id="merlinclash_unblockmusic_bestquality_tr">
+															<th>
+																<label >强制音质优先</label>
+															</th>
+															<td>
+																<label for="merlinclash_unblockmusic_bestquality">
+																	<input id="merlinclash_unblockmusic_bestquality" type="checkbox" name="unblockmusic_bestquality">
 																</label>
 															</td>
-													</tr>
+														</tr>
+														<tr id="cert_download_tr">
+															<th>
+																<label >证书下载</label>&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(8)"><em style="color: gold;">【IOS说明】</em></a>																
+															</th>
+															<td>
+																<input  type="button" id="merlinclash_unblockmusic_download_cert" class="button_gen" onclick="downloadcert();" value="下载证书" />
+																
+															</td>
+														</tr>
+														<tr id="unblockneteasemusic_restart_tr">
+															<th>
+																<label >重启进程</label>
+															</th>
+															<td>
+																<input  type="button" id="merlinclash_unblockmusic_restart" class="button_gen" onclick="unblock_restart();" value="重启解锁进程" />
+															</td>
+														</tr>
 												</table>
-											</div>
+												<div id="UBM_note" style="margin:10px 0 0 5px"><i></i><em style="color: gold;">&nbsp;&nbsp;&nbsp;需要先安装网易云解锁插件，可实现解锁音乐变灰歌曲，并通过Clash规则精准分流。<br>1.开启后，通过Clash分流功能自动实现解锁，无需手动设置代理。<br>2.可通过Clash的<a href="http://yacd.haishan.me" target="_blank"><em>【管理面板】</em></a>，打开或者关闭解锁功能。<br>3.相对于之前解锁方式，本地解锁更加安全快速。<br>4.苹果设备如果无法正常解锁，请设置 WIFI/有线代理方式为<em>【自动】</em> ,并安装 <em>【CA根证书】</em>并<em>【信任】</em>。<br>5.如果通过Clash分流解锁失败，可以尝试在APP里设置如下代理：<br>&nbsp;&nbsp;&nbsp;HTTP代理IP:<% nvram_get("lan_ipaddr"); %>，端口:5200<br>&nbsp;&nbsp;&nbsp;HTTPS代理IP:<% nvram_get("lan_ipaddr"); %>，端口:5300</div>
+												
+											</div>	
 										</div>
 										<!--附加功能-->
 										<div id="tablet_4" style="display: none;">
@@ -1616,7 +2585,7 @@ function menu_hook(title, tab) {
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 													<thead>
 													<tr>
-														<td colspan="2">GeoIP 数据库</td>
+														<td colspan="2">更新管理</td>
 													</tr>
 													</thead>
 													<tr>
@@ -1624,13 +2593,148 @@ function menu_hook(title, tab) {
 														<td colspan="2">
 															<div class="SimpleNote" id="head_illustrate">
 																<p>Clash 使用由 <a href="https://www.maxmind.com/" target="_blank"><u>MaxMind</u></a> 提供的 <a href="https://dev.maxmind.com/geoip/geoip2/geolite2/" target="_blank"><u>GeoLite2</u></a> IP 数据库解析 GeoIP 规则</p>
-																	<p style="color:#FC0">注：更新不会对比新旧版本号，重复点击会重复升级！（1个月左右更新一次即可）</p>
+																<p style="color:#FC0">注：更新不会对比新旧版本号，重复点击会重复升级！（1个月左右更新一次即可）</p>
 																<p>&nbsp;</p>
-																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="geoip_update(5)">更新GeoIP数据库</a>
-																	<!--<a type="button" class="ss_btn" style="cursor:pointer" href="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=oeEqpP5QI21N&suffix=tar.gz">点击下载GeoIP数据库</a>-->
+																<a type="button" class="ss_btn" style="cursor:pointer" onclick="geoip_update(5)">更新GeoIP数据库</a>
+																<span id="geoip_updata_date">上次更新时间：</span>
+																<!--<a type="button" class="ss_btn" style="cursor:pointer" href="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=oeEqpP5QI21N&suffix=tar.gz">点击下载GeoIP数据库</a>-->
 															</div>
 														</td>		
 													</tr>
+													<!--
+													<tr>
+														<th>clash二进制更新</th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">																	
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="clash_update(7)">更新clash二进制</a>
+																	<span id="clash_update_date">&nbsp;&nbsp;上次更新时间：</span>
+																</div>
+															</td>		
+													</tr>
+													-->
+													<tr>
+														<th>clash二进制替换 --在线更换</th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">
+																	<select id="merlinclash_clashbinarysel"  name="clashbinarysel" dataType="Notnull"></select>
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="clash_getversion(10)">获取远程版本文件</a>		
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="clash_replace(11)">替换clash二进制</a>																	
+																</div>
+															</td>		
+													</tr>
+													<tr>
+														<th>clash二进制替换 --本地替换</th>
+															<td colspan="2">
+																<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
+																	<input type="file" id="clashbinary" size="50" name="file"/>
+																	<span id="clashbinary_upload" style="display:none;">完成</span>															
+																	<a type="button" style="vertical-align: middle; cursor:pointer;" id="clashbinary-btn-upload" class="ss_btn" onclick="upload_clashbinary()" >上传clash二进制</a>
+																</div>
+															</td>		
+													</tr>
+												</table>												
+												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_dnsfiles_table">
+													<thead>
+													<tr>
+														<td colspan="2">内置DNS方案 -- <em style="color: gold;">【不懂勿动，编辑完成点击“提交修改”保存配置，下次启动Merlin Clash时生效】</em></td>
+													</tr>
+													</thead>
+													<tr>
+													<th>【Redir-Host】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-nameserver:</a></th>
+														<td colspan="2">
+															<div class="SimpleNote" id="head_illustrate">
+																<input id="merlinclash_rh_nameserver1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																<br>
+																<br>
+																<input id="merlinclash_rh_nameserver2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																<br>
+																<br>
+																<input id="merlinclash_rh_nameserver3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+															</div>
+														</td>		
+													</tr>
+													<tr>
+														<th>【Redir-Host】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-fallback:</a></th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">
+																	<input id="merlinclash_rh_fallback1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																	<br>
+																	<br>
+																	<input id="merlinclash_rh_fallback2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																	<br>
+																	<br>
+																	<input id="merlinclash_rh_fallback3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																														
+																</div>
+															</td>		
+													</tr>
+													<tr>
+														<th>【Redir-Host+】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-nameserver:</a></th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">
+																	<input id="merlinclash_rhp_nameserver1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																	<br>
+																	<br>
+																	<input id="merlinclash_rhp_nameserver2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																	<br>
+																	<br>
+																	<input id="merlinclash_rhp_nameserver3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+															</div>
+															</td>		
+														</tr>
+														<tr>
+															<th>【Redir-Host+】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-fallback:</a></th>
+																<td colspan="2">
+																	<div class="SimpleNote" id="head_illustrate">
+																		<input id="merlinclash_rhp_fallback1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																		<br>
+																		<br>
+																		<input id="merlinclash_rhp_fallback2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																		<br>
+																		<br>
+																		<input id="merlinclash_rhp_fallback3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																																
+																	</div>
+																</td>		
+														</tr>
+														<tr>
+															<th>【Fake-ip】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-nameserver:</a></th>
+																<td colspan="2">
+																	<div class="SimpleNote" id="head_illustrate">
+																		<input id="merlinclash_fi_nameserver1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																		<br>
+																		<br>
+																		<input id="merlinclash_fi_nameserver2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																		<br>
+																		<br>
+																		<input id="merlinclash_fi_nameserver3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																														
+																	</div>
+																</td>		
+															</tr>
+															<tr>
+																<th>【Fake-ip】&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: gold;">-fallback:</a></th>
+																	<td colspan="2">
+																		<div class="SimpleNote" id="head_illustrate">
+																			<input id="merlinclash_fi_fallback1" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																			<br>
+																			<br>
+																			<input id="merlinclash_fi_fallback2" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																			<br>
+																			<br>
+																			<input id="merlinclash_fi_fallback3" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;" placeholder="">																
+																																				
+																		</div>
+																	</td>		
+															</tr>
+														<tr>
+															<th></th>															
+															<td colspan="2">
+																		<div class="SimpleNote" id="head_illustrate">
+																			<a type="button" style="margin: 100px; vertical-align: middle; cursor:pointer"  class="ss_btn" onclick="dnsfilechange()">&nbsp;&nbsp;修改提交&nbsp;&nbsp;</a>																
+																		</div>
+																	</td>		
+														</tr>
 												</table>
 											</div>
 										</div>
@@ -1646,6 +2750,9 @@ function menu_hook(title, tab) {
 										</div>
 										<div class="apply_gen" id="loading_icon">
 											<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
+										</div>
+										<div id="delallpgnodes_button" class="apply_gen">
+											<input class="button_gen" type="button" onclick="delallpgnodes()" value="全部删除">	
 										</div>
 										<div id="apply_button" class="apply_gen">
 											<input class="button_gen" type="button" onclick="apply()" value="保存&应用">
@@ -1664,5 +2771,4 @@ function menu_hook(title, tab) {
 <div id="footer"></div>
 </body>
 </html>
-
 

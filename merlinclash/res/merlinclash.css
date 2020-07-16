@@ -420,10 +420,13 @@ input[type=checkbox]{
 	background: transparent url(/res/accountdelete.png) no-repeat scroll center top;
 }
 .edit_btn{
-  background: transparent url(/res/accountedit.png) no-repeat scroll center top;
+  background: transparent url(/res/accountsave.png) no-repeat scroll center top;
 }
 .add_btn{
 	background: transparent url(/res/accountadd.png) no-repeat scroll center top;
+}
+.save_btn{
+	background: transparent url(/res/accountsave.png) no-repeat scroll center top;
 }
 /*--------for lb--------*/
 .cloud_main_radius h2 { border-bottom:1px #AAA dashed;}
@@ -431,4 +434,3 @@ input[type=checkbox]{
 .cloud_main_radius h4 { font-size:12px;color:#FC0;font-weight:normal;font-style: normal;}
 .cloud_main_radius h5 { color:#FFF;font-weight:normal;font-style: normal;}
 
-    

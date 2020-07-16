@@ -34,7 +34,9 @@ if [ -n "$pid_watchdog" ]; then
 else
     text2="<span style='color: orange'>$date Clash 看门狗未在运行！</span>"
 fi
+yamlsel_tmp2=$yamlname
 
-echo "$text1@$text2@$host@$port@$secret@$text3@$text4" > /tmp/merlinclash.log
-
+[ ! -L "/tmp/yacd" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/yacd /www/ext/
+[ ! -L "/tmp/razord" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/razord /www/ext/
+echo "$text1@$text2@$host@$port@$secret@$text3@$text4@$yamlsel_tmp2" > /tmp/merlinclash.log
 

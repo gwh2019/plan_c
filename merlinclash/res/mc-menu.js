@@ -377,6 +377,27 @@ function LoadingMCProgress(seconds) {
 	}	else if (action == 6) {
 		document.getElementById("loading_block3").innerHTML = "飞机节点正在一键转换中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 7) {
+		document.getElementById("loading_block3").innerHTML = "clash二进制在线更新中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 8) {
+		document.getElementById("loading_block3").innerHTML = "网易云音乐解锁快速重启中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 9) {
+		document.getElementById("loading_block3").innerHTML = "网易云音乐解锁证书生成中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 10) {
+		document.getElementById("loading_block3").innerHTML = "获取远程clash版本号中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 11) {
+		document.getElementById("loading_block3").innerHTML = "替换clash版本中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 12) {
+		document.getElementById("loading_block3").innerHTML = "本地上传clash二进制替换处理中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 13) {
+		document.getElementById("loading_block3").innerHTML = "本地上传UnblockNeteaseMusic中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	}
 }
 function hideMCLoadingBar() {
@@ -487,6 +508,28 @@ function openmcHint(itemNum) {
         statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;<font color=#279fd9>如果转换失败，请使用前往ACL4SSR主页在线转换</font></br>"
 		_caption = "订阅帮助";
 		
+	}
+	if (itemNum == 7) {
+		width = "350px";
+		bgcolor = "#CC0066",
+		statusmenu += "<span><b><font color='#CC0066'>快速重启</font></b></br>"
+		statusmenu += "快速恢复最后一次正常启动的配置状态。</br>"
+		statusmenu += "省去文件检查，合并等操作，节省启动时间。</br>"
+		statusmenu += "<span><font color='#CC0066'>--上一次正常启动后修改的设置，快速重启不会生效--</font></br>"
+		statusmenu += "</br>"
+		statusmenu += "如需应用任何新的设置，请通过“保存&应用”正常启动！</br>"
+		_caption = "快速重启说明";		
+	}
+	if (itemNum == 8) {
+		width = "350px";
+		bgcolor = "#CC0066",
+		statusmenu += "如果能正常解锁，请忽略本内容。</br>"
+		statusmenu += "<span><b><font color='#CC0066'>证书安装</font></b></br>"
+		statusmenu += "点击“生成证书”后，“下载证书”后安装到您需要解锁的设备中:</br>"
+		statusmenu += "iOS13及以上设备，安装证书后，在“设置-通用-关于本机-证书信任设置” 中，信任 UnblockNeteaseMusic Root CA</br>"
+		statusmenu += "</br>"
+		
+		_caption = "IOS使用说明";		
 	}
 	return overlib(statusmenu, OFFSETX, -500, LEFT, STICKY, WIDTH, 'width', CAPTION, _caption, CLOSETITLE, '');
 }
@@ -2924,4 +2967,5 @@ new function() {
 		SHRUNK: /\x02\d+\b/g
 	})
 };
+
 

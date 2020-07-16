@@ -11,7 +11,7 @@ rm -rf /tmp/merlinclash_log.txt
 rm -rf /tmp/*.yaml
 cp -rf /jffs/softcenter/merlinclash/yaml/proxies.yaml /tmp/proxies.yaml
 cp -rf /jffs/softcenter/merlinclash/yaml/proxy-group.yaml /tmp/proxy-group.yaml
-LOCK_FILE=/tmp/yaml_online_update.lock
+LOCK_FILE=/var/lock/yaml_online_update.lock
 flag=0
 upname=""
 upname_tmp=""
@@ -131,7 +131,7 @@ get_ss_rule_now(){
 				#add ss节点
 				echo_date "转换v2ray节点：$n--$remarks"
 				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].type "v2ray"
+				yq w -i /tmp/proxies.yaml proxies[$n].type "vmess"
 				yq w -i /tmp/proxies.yaml proxies[$n].server $server
 				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
 				yq w -i /tmp/proxies.yaml proxies[$n].uuid $v2ray_id

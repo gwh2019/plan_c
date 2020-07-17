@@ -36,7 +36,31 @@ else
 fi
 yamlsel_tmp2=$yamlname
 
-[ ! -L "/tmp/yacd" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/yacd /www/ext/
-[ ! -L "/tmp/razord" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/razord /www/ext/
-echo "$text1@$text2@$host@$port@$secret@$text3@$text4@$yamlsel_tmp2" > /tmp/merlinclash.log
+[ ! -L "/www/ext/yacd" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/yacd /www/ext/
+[ ! -L "/www/ext/razord" ] && ln -sf /jffs/softcenter/merlinclash/dashboard/razord /www/ext/
+#网易云音乐解锁状态
+unblockmusic_pid=`pidof UnblockNeteaseMusic`
+unblockmusic_LOCAL_VER=$(dbus get unblockmusic_bin_version)
+if [ -n "$unblockmusic_LOCAL_VER" ]; then
+    text8="<span style='color: gold'>插件版本： $unblockmusic_LOCAL_VER</span>"
+else
+    text8="<span style='color: red'>获取插件版本失败，请重新安装网易云插件！</span>"
+fi
+if [ -n "$unblockmusic_pid" ];then
+    if [ "$merlinclash_unblockmusic_bestquality" == "1" ]; then
+	    text9="<span style='color: gold'>运行中 | 已开启高音质</span>"
+    else
+        text9="<span style='color: gold'>运行中 | 未开启高音质</span>"
+    fi
+else
+	text9="<span style='color: gold'>未启动</span>"
+fi
+
+#内置规则文件版本
+if [ "$merlinclash_proxygroup_version" != "" ]; then
+    text10="<span style='color: gold'>当前版本：$merlinclash_proxygroup_version</span>"
+else    
+    text10="<span style='color: gold'>当前版本：0</span>"
+fi
+echo "$text1@$text2@$host@$port@$secret@$text3@$text4@$yamlsel_tmp2@$text8@$text9@$text10" > /tmp/merlinclash.log
 

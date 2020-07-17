@@ -49,7 +49,7 @@ function init() {
 	yaml_view();
 	get_log();
 	refresh_kcp_table();
-	check_unblockneteasemusic_status();	
+	//check_unblockneteasemusic_status();	
 	if(E("merlinclash_enable").checked){
 		merlinclash.checkIP();
 	}
@@ -99,7 +99,7 @@ function get_dbus_data() {
 			}			
 			toggle_func();
 			get_clash_status_front();
-			gethost();				
+			//gethost();				
 			dnsfiles();				
 			version_show();
 			refresh_acl_table();
@@ -194,15 +194,15 @@ function quickly_restart() {
 			} else {
 				yamlsel_tmp2 = arr[7];
 				//更换配置文件，清空节点指定内容
-				if(yamlsel_tmp2==null){
-					yamlsel_tmp2=yamlsel_tmp1
+				//if(yamlsel_tmp2==null){
+				//	yamlsel_tmp2=yamlsel_tmp1
 					
-				}
-				if(yamlsel_tmp2!=yamlsel_tmp1){
-					alert("切换配置不能直接快速重启");
-					refreshpage();
-					return false;						
-				}
+				//}
+				//if(yamlsel_tmp2!=yamlsel_tmp1){
+				//	alert("切换配置不能直接快速重启");
+				//	refreshpage();
+				//	return false;						
+				//}
 				push_data("clash_config.sh", "restart",  db_merlinclash);
 			}
 		}
@@ -381,12 +381,16 @@ function toggle_func() {
 			//if(db_merlinclash["merlinclash_update_clashdate"]){
 			//	E("clash_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_clashdate"]+"</span>";
 			//}
+			//if(db_merlinclash["merlinclash_update_proxygroupdate"]){
+			//	E("proxygroup_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_proxygroupdate"]+"</span>";
+			//}
 			tabSelect(4);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn5").click(
 		function() {
+			get_log();
 			tabSelect(5);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
@@ -437,28 +441,19 @@ function get_clash_status_front() {
 			} else {
 				E("clash_state2").innerHTML = arr[0];
 				E("clash_state3").innerHTML = arr[1];
+				$("#yacd").html("<a type='button' href='http://"+ arr[2] + "/ext/yacd/index.html?hostname=" + arr[2] + "&port=" + arr[3] + "'" + " target='_blank' >访问 YACD-Clash 面板</a>");
+				$("#razord").html("<a type='button' href='http://"+ arr[2] + "/ext/razord/index.html' target='_blank' >访问 RAZORD-Clash 面板</a>");				
 				E("dashboard_state2").innerHTML = arr[5];
 				E("dashboard_state3").innerHTML = arr[6];
 				yamlsel_tmp2 = arr[7];
+				E("merlinclash_unblockmusic_version").innerHTML = arr[8];
+				E("merlinclash_unblockmusic_status").innerHTML = arr[9];
+				E("proxygroup_version").innerHTML = arr[10];
 			}
 		}
 	});
 
 	setTimeout("get_clash_status_front();", 10000);
-}
-function get_clash_nodes_proxygroup_front() {
-	//var id = parseInt(Math.random() * 100000000);
-	//var postData = {"id": id, "method": "clash_nodesproxygroup.sh", "params":[], "fields": ""};
-	$.ajax({
-		url: "/logreaddb.cgi?p=clash_proc_status.txt&script=clash_nodesproxygroup.sh",
-		async: true,
-		data: JSON.stringify(postData),
-		success: function(response) {
-			
-		}
-	});
-
-	setTimeout("get_clash_nodes_proxygroup_front();", 10000);
 }
 function close_proc_status() {
 	$("#detail_status").fadeOut(200);
@@ -996,6 +991,42 @@ function clash_update(action){
 		});
 	});
 }
+function proxygroup_update(action) {
+	var dbus_post = {};
+	var date = new Date();
+    var seperator1 = "-";
+    var seperator2 = ":";
+    var month = date.getMonth() + 1;
+    var strDate = date.getDate();
+    if (month >= 1 && month <= 9) {
+        month = "0" + month;
+    }
+    if (strDate >= 0 && strDate <= 9) {
+        strDate = "0" + strDate;
+    }
+    var currentdate = date.getFullYear() + seperator1 + month + seperator1 + strDate
+            + " " + date.getHours() + seperator2 + date.getMinutes()
+            + seperator2 + date.getSeconds();
+	require(['/res/layer/layer.js'], function(layer) {
+		layer.confirm('<li>你确定要更新内置规则文件吗？</li>', {
+			shade: 0.8,
+		}, function(index) {
+			$("#log_content3").attr("rows", "20");
+			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+			//dbus_post["merlinclash_update_proxygroupdate"] = db_merlinclash["merlinclash_update_proxygroupdate"] = currentdate;
+			
+			push_data("clash_update_proxygroup.sh", "start", dbus_post);
+			
+			//E("proxygroup_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_proxygroupdate"]+"</span>";
+			layer.close(index);
+			return true;
+			
+		}, function(index) {
+			layer.close(index);
+			return false;
+		});
+	});
+}
 function clash_getversion(action) {
 	var dbus_post = {};
 	dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
@@ -1176,6 +1207,7 @@ function proxies_select(){
 		}
 	});
 }
+var pxcounts;
 pxcounts=0;
 function Mypxselect(arrb){
 	var i;
@@ -2629,6 +2661,16 @@ function menu_hook(title, tab) {
 																	<input type="file" id="clashbinary" size="50" name="file"/>
 																	<span id="clashbinary_upload" style="display:none;">完成</span>															
 																	<a type="button" style="vertical-align: middle; cursor:pointer;" id="clashbinary-btn-upload" class="ss_btn" onclick="upload_clashbinary()" >上传clash二进制</a>
+																</div>
+															</td>		
+													</tr>
+													<tr>
+														<th>内置规则文件更新</th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">																	
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="proxygroup_update(14)">更新内置规则文件</a>
+																	<span id="proxygroup_version">&nbsp;&nbsp;当前版本：</span>
+																	<!--<span id="proxygroup_update_date">&nbsp;&nbsp;上次更新时间：</span>-->
 																</div>
 															</td>		
 													</tr>

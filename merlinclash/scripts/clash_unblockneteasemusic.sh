@@ -101,6 +101,10 @@ start_unblockmusic(){
 	mkdir -p /var/wwwext
 	ln -sf /jffs/softcenter/bin/Music/ca.crt /www/ext
 	set_firewall
+	ubm_process=$(pidof UnblockNeteaseMusic);
+	if [ -n "$ubm_process" ]; then
+		echo_date "网易云音乐解锁启动完成，pid：$ubm_process" >> $LOG_FILE
+	fi
 }
 
 stop_unblockmusic(){

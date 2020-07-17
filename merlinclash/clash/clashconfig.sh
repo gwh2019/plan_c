@@ -16,6 +16,7 @@ head_tmp=/jffs/softcenter/merlinclash/yaml/head.yaml
 
 ip_prefix_hex=$(nvram get lan_ipaddr | awk -F "." '{printf ("0x%02x", $1)} {printf ("%02x", $2)} {printf ("%02x", $3)} {printf ("00/0xffffff00\n")}')
 uploadpath=/tmp/
+bridge=$(ifconfig | grep br | awk -F' ' '{print $1}')
 set_lock() {
 	exec 1000>"$LOCK_FILE"
 	flock -x 1000
@@ -112,16 +113,20 @@ flush_nat() {
 	iptables -t nat -D PREROUTING -p tcp --dport $ssh_port -j ACCEPT >/dev/null 2>&1
 	#DNS端口
 	iptables -t nat -D PREROUTING -p udp -m udp --dport 53 -j DNAT --to-destination $lan_ipaddr:23453 >/dev/null 2>&1
-	
-	
+	iptables -t nat -D PREROUTING -p tcp -j merlinclash
+	iptables -t nat -D PREROUTING -p tcp -i br0 -j merlinclash
+
 	#udp
 	#转发UDP流量到clash端口
-	iptables -t mangle -D merlinclash -p udp -j TPROXY --on-port "$proxy_port" --tproxy-mark 310
+	iptables -t mangle -D merlinclash -d 192.168.2.1 -j RETURN
+	iptables -t mangle -D merlinclash -p udp -j TPROXY --on-port "$proxy_port" --tproxy-mark 0x01/0x01
+	iptables -t mangle -D merlinclash -p udp -j TPROXY --on-port "$proxy_port" --tproxy-mark 0x07
 	#透明代理UDP流量到clash mangle链
 	iptables -t mangle -D PREROUTING -p udp -j merlinclash
-	
-	iptables -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to 23453
+	iptables -t mangle -D PREROUTING -p udp -i $bridge -j merlinclash
 
+	iptables -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to 23453
+	iptables -t nat -D OUTPUT -p tcp -d 198.18.0.0/16 -j REDIRECT --to-port "$proxy_port"
 	iptables -t nat -D PREROUTING -p udp -s $(get_lan_cidr) --dport 53 -j DNAT --to $lan_ipaddr >/dev/null 2>&1
 	iptables -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 23453
 	iptables -t nat -D PREROUTING -p udp --dport 53 -d $lan_ipaddr -j DNAT --to-destination $lan_ipaddr:23453
@@ -130,8 +135,10 @@ flush_nat() {
 	
 	iptables -t nat -F merlinclash >/dev/null 2>&1 && iptables -t nat -X merlinclash >/dev/null 2>&1
 	#echo_date 删除ip route规则.
-	ip rule del fwmark 0x07 table 310
-	ip route del local 0.0.0.0/0 dev lo table 310
+	ip rule del fwmark 1 lookup 100
+	ip route del local default dev lo table 100
+	#ip rule del fwmark 0x07 table 310
+	#ip route del local 0.0.0.0/0 dev lo table 310
 	echo_date 清除iptables规则完毕... >> $LOG_FILE
 	
 }
@@ -260,7 +267,7 @@ load_nat() {
 		nat_ready=$(iptables -t nat -L PREROUTING -v -n --line-numbers | grep -v PREROUTING | grep -v destination)
 	done
 	echo_date "加载nat规则!" >> $LOG_FILE
-	sleep 2s
+	sleep 1s
 	apply_nat_rules3
 	#chromecast
 }
@@ -378,13 +385,19 @@ apply_nat_rules3() {
 	if [ "$merlinclash_udpr" == "1" ]; then
 		echo_date "检测到开启udp转发，将创建相关iptable规则" >> $LOG_FILE
 		# udp
-		#load_tproxy
-		modprobe xt_TPROXY
-		ip rule add fwmark 0x07 table 310
-		ip route add local 0.0.0.0/0 dev lo table 310
+		load_tproxy
+		# 设置策略路由
+		#modprobe xt_TPROXY
+		#ip rule add fwmark 0x07 table 310
+		
+		#ip route add local 0.0.0.0/0 dev lo table 310
+		ip rule add fwmark 1 lookup 100
+		ip route add local default dev lo table 100
 		iptables -t mangle -N merlinclash
 		iptables -t mangle -F merlinclash
 		#绕过内网
+		iptables -t mangle -A merlinclash -d 192.168.2.1 -j RETURN
+
 		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -j RETURN
 		iptables -t mangle -A merlinclash -d 10.0.0.0/8 -j RETURN
 		iptables -t mangle -A merlinclash -d 0.0.0.0/8 -j RETURN
@@ -394,9 +407,10 @@ apply_nat_rules3() {
 		iptables -t mangle -A merlinclash -d 224.0.0.0/4 -j RETURN
 		iptables -t mangle -A merlinclash -d 240.0.0.0/4 -j RETURN	
 		#转发UDP流量到clash端口
-		iptables -t mangle -A merlinclash -p udp -j TPROXY --on-port "$proxy_port" --tproxy-mark 310
+		iptables -t mangle -A merlinclash -p udp -j TPROXY --on-port "$proxy_port" --tproxy-mark 0x01/0x01
 		#透明代理UDP流量到clash mangle链
-		iptables -t mangle -A PREROUTING -p udp -j merlinclash
+		iptables -t mangle -A PREROUTING -p udp -i $bridge -j merlinclash
+		#iptables -t mangle -A PREROUTING -p udp -j merlinclash
 	else
 		echo_date "检测到udp转发未开启，进行下一步" >> $LOG_FILE
 
@@ -413,7 +427,7 @@ start_clash(){
 	echo_date "启用$yamlname YAML配置" >> $LOG_FILE
 	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>/tmp/clash_error.log &
 	#检查clash进程
-	sleep 5s
+	sleep 2s
 	pid_clash=$(pidof clash)
 	if [ -n "$pid_clash" ]; then
 		echo_date "Clash 进程启动成功！(PID: $pid_clash)"
@@ -491,6 +505,7 @@ check_yaml(){
 		#删除文件自带的port、socks-port、redir-port、allow-lan、mode、log-level、external-controller、experimental段
 		echo_date "删除配置文件头并与标准文件头拼接" >> $LOG_FILE 
 		yq d  -i $yamlpath port
+		#yq d  -i $yamlpath mixed-port
 		yq d  -i $yamlpath socks-port
 		yq d  -i $yamlpath redir-port
 		yq d  -i $yamlpath allow-lan
@@ -516,7 +531,7 @@ check_yaml(){
 		#echo_date "判断是否存在 port字段、socks-port、redir-port、allow-lan等"
 		yq r $yamlpath port 1>/dev/null 2>/tmp/clash_error.log
 		error=$(sed -n 1p /tmp/clash_error.log | awk -F':' '{print $1}')
-		if [ $error == "Error" ]; then
+		if [ "$error" == "Error" ]; then
 			echo_date "yq 发生异常，yaml文件可能存在格式问题，即将退出！" >> $LOG_FILE
 			echo_date "以下是错误原因：" >> $LOG_FILE
 			b=$(cat /tmp/clash_error.log)
@@ -540,9 +555,7 @@ check_yaml(){
 			echo_date "Clash 配置文件DNS可用！"
 		else
 			echo_date "在 Clash 配置文件中没有找到 DNS 配置！后续操作将为你配置dns继续启动"
-			#dbus set $merlinclash_dnsplan="de"
-			#echo_date "...MerlinClash！退出中..."
-			#close_in_five
+			
 		fi
 	else
 		echo_date "没有找到上传的配置文件！请先上传您的配置文件！"
@@ -639,7 +652,7 @@ stop_config(){
 	echo_date --------------------------- 启动 ---------------------------- >> $LOG_FILE
 	#stop_status 
 	echo_date ---------------------- 结束相关进程-------------------------- >> $LOG_FILE
-	if [ -n "$(pidof UnblockNeteaseMusic)" -o "$merlinclash_unblockmusic_enable" == "1" ]; then
+	if [ "$merlinclash_unblockmusic_enable" == "1" ]; then
 		sh /jffs/softcenter/scripts/clash_unblockneteasemusic.sh stop
 	fi
 	restart_dnsmasq
@@ -672,7 +685,7 @@ check_unblockneteasemusic(){
 		if [ "$merlinclash_unblockmusic_enable" == "1" ];then
 			echo_date "检测到开启网易云解锁功能，开始处理" >> $LOG_FILE	
 			sh /jffs/softcenter/scripts/clash_unblockneteasemusic.sh restart
-			sleep 3s
+			sleep 1s
 			ubm_process=$(pidof UnblockNeteaseMusic);
 			if [ -n "$ubm_process" ]; then			
 				#获取proxies跟rules行号
@@ -883,8 +896,8 @@ quicklyrestart)
 	unset_lock
 	;;
 start_nat)
-	set_lock
-	if [ "$merlinclash_enable" == "1" ]; then
+	#set_lock
+	if [ "$merlinclash_enable" == "1" -a -n "$(pidof clash)" ]; then
 		logger "[软件中心]: iptable发生变化，Merlin Clash nat重启！"
 		echo_date "============= Merlin Clash iptable 重写开始=============" >> $LOG_FILE
 		echo_date "[软件中心]: iptable发生变化，Merlin Clash nat重启！" >> $LOG_FILE
@@ -897,7 +910,7 @@ start_nat)
 		logger "[软件中心]: MerlinClash插件未开启，不启动！"
 		echo_date "[软件中心]: MerlinClash插件未开启，不启动！" >> $LOG_FILE
 	fi
-	unset_lock
+	#unset_lock
 	;;
 esac
 

@@ -34,12 +34,12 @@ get_latest_version(){
 	rm -rf /tmp/clash_latest_info.txt
 	echo_date "检测clash最新版本..." >> $LOG_FILE
 	#插入hosts,免得raw.githubusercontent.com解析失败
-	if grep -q "raw.githubusercontent.com" /etc/hosts; then
-		echo_date "已存在raw.githubusercontent.com的host记录" >> $LOG_FILE
-	else
-		echo_date "创建raw.githubusercontent.com的host记录" >> $LOG_FILE
-		sed -i '$a\151.101.128.133 raw.githubusercontent.com' /etc/hosts
-	fi
+	#if grep -q "raw.githubusercontent.com" /etc/hosts; then
+	#	echo_date "已存在raw.githubusercontent.com的host记录" >> $LOG_FILE
+	#else
+	#	echo_date "创建raw.githubusercontent.com的host记录" >> $LOG_FILE
+	#	sed -i '$a\151.101.128.133 raw.githubusercontent.com' /etc/hosts
+	#fi
 	curl --connect-timeout 8 -s ${url_main}/${ARCH_SUFFIX}/version > /tmp/clash_latest_info.txt
 	if [ "$?" == "0" ];then
 		if [ -z "`cat /tmp/clash_latest_info.txt`" ];then 
@@ -183,3 +183,4 @@ restart)
 	echo BBABBBBC >> $LOG_FILE
 	;;
 esac
+

@@ -398,6 +398,9 @@ function LoadingMCProgress(seconds) {
 	}	else if (action == 13) {
 		document.getElementById("loading_block3").innerHTML = "本地上传UnblockNeteaseMusic中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 14) {
+		document.getElementById("loading_block3").innerHTML = "在线更新内置规则文件中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	}
 }
 function hideMCLoadingBar() {
@@ -2967,5 +2970,4 @@ new function() {
 		SHRUNK: /\x02\d+\b/g
 	})
 };
-
 

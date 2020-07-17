@@ -113,7 +113,7 @@ echo_date 一点点清理工作...
 rm -rf /tmp/clash* >/dev/null 2>&1
 
 echo_date clash插件安装成功！
-	#生成yamls.txt
+	#yaml不为空则复制文件 然后生成yamls.txt
 	dir=/jffs/softcenter/merlinclash/yaml_bak
 	a=$(ls $dir | wc -l)
 	if [ $a -gt 0 ]
@@ -128,7 +128,7 @@ echo_date clash插件安装成功！
 	#find $fp  -name "*.yaml" |sed 's#.*/##' >> $fp/yamls.txt
 	find /jffs/softcenter/merlinclash/yaml_bak  -name "*.yaml" |sed 's#.*/##' |sed '/^$/d' | awk -F'.' '{print $1}' >> /jffs/softcenter/merlinclash/yaml_bak/yamls.txt
 	#创建软链接
-	ln -s /jffs/softcenter/merlinclash/yaml_bak/yamls.txt /tmp/yamls.txt
+	ln -sf /jffs/softcenter/merlinclash/yaml_bak/yamls.txt /tmp/yamls.txt
 	#
 	echo_date "初始化配置文件处理完成"
 if [ "$merlinclash_enable" == "1" ];then

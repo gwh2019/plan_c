@@ -36,12 +36,12 @@ get_binary_history(){
 	rm -rf /jffs/softcenter/merlinclash/clash_binary_history.txt
 	rm -rf /tmp/clash_bin_history.txt
 	#插入hosts,免得raw.githubusercontent.com解析失败
-	if grep -q "raw.githubusercontent.com" /etc/hosts; then
-		echo_date "已存在raw.githubusercontent.com的host记录" >> $LOG_FILE
-	else
-		echo_date "创建raw.githubusercontent.com的host记录" >> $LOG_FILE
-		sed -i '$a\151.101.64.133 raw.githubusercontent.com' /etc/hosts
-	fi
+	#if grep -q "raw.githubusercontent.com" /etc/hosts; then
+	#	echo_date "已存在raw.githubusercontent.com的host记录" >> $LOG_FILE
+	#else
+	#	echo_date "创建raw.githubusercontent.com的host记录" >> $LOG_FILE
+	#	sed -i '$a\151.101.64.133 raw.githubusercontent.com' /etc/hosts
+	#fi
 	
 	echo_date "下载clash历史版本号文件..." >> $LOG_FILE
 	curl --connect-timeout 8 -s ${url_main}/${ARCH_SUFFIX}/clash_binary_history.txt > /tmp/clash_bin_history.txt
@@ -205,3 +205,4 @@ restart)
 	echo BBABBBBC >> $LOG_FILE
 	;;
 esac
+

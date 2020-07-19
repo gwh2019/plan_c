@@ -534,6 +534,20 @@ function openmcHint(itemNum) {
 		
 		_caption = "IOS使用说明";		
 	}
+	if (itemNum == 9) {
+		width = "350px";
+		bgcolor = "#CC0066",
+		statusmenu += "<span><b><font color='#CC0066'>【1】请确保服务器节点支持UDP转发</font></b></br>"
+		
+		statusmenu += "<span><b><font color='#CC0066'>【2】功能为实验性功能，可能存在不可预知的BUG</font></b></br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;使用过程有上网方面的问题，请关闭该功能</br>"
+		statusmenu += "<span><b><font color='#CC0066'>【3】在此提供测试节点是否支持udp转发的方法</font></b></br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;可在面板修改为GLOBAL模式，节点选择待测试节点</br>"
+	    statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;如果上网正常，则节点支持本功能</br>"
+		
+
+		_caption = "UDP试用必看";	
+	}
 	return overlib(statusmenu, OFFSETX, -500, LEFT, STICKY, WIDTH, 'width', CAPTION, _caption, CLOSETITLE, '');
 }
 

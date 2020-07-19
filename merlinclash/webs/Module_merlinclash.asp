@@ -75,7 +75,7 @@ function get_dbus_data() {
 				E("merlinclash_unblockmusic_musicapptype").value = db_merlinclash["merlinclash_unblockmusic_musicapptype"];
 			}
 			//E("merlinclash_kpswitch").checked = db_merlinclash["merlinclash_kpswitch"] == "1";
-			//E("merlinclash_udpr").checked = db_merlinclash["merlinclash_udpr"] == "1";
+			E("merlinclash_udpr").checked = db_merlinclash["merlinclash_udpr"] == "1";
 			E("merlinclash_unblockmusic_bestquality").checked = db_merlinclash["merlinclash_unblockmusic_bestquality"] == "1";			
 			if(db_merlinclash["merlinclash_links"]){					
 				E("merlinclash_links").value = db_merlinclash["merlinclash_links"];
@@ -199,9 +199,8 @@ function quickly_restart() {
 					
 				//}
 				//if(yamlsel_tmp2!=yamlsel_tmp1){
-				//	alert("切换配置不能直接快速重启");
-				//	refreshpage();
-				//	return false;						
+				//	apply_delallpgnodes();
+				//	db_merlinclash["merlinclash_action"] = "1";					
 				//}
 				push_data("clash_config.sh", "restart",  db_merlinclash);
 			}
@@ -231,7 +230,7 @@ function apply() {
 	//URL编码后再传入后端
 	var links3 = encodeURIComponent(E("merlinclash_links3").value);
 	db_merlinclash["merlinclash_links3"] = links3;
-	//db_merlinclash["merlinclash_udpr"] = E("merlinclash_udpr").checked ? '1' : '0';
+	db_merlinclash["merlinclash_udpr"] = E("merlinclash_udpr").checked ? '1' : '0';
 	db_merlinclash["merlinclash_unblockmusic_bestquality"] = E("merlinclash_unblockmusic_bestquality").checked ? '1' : '0';
 	db_merlinclash["merlinclash_yamlsel"] = E("merlinclash_yamlsel").value;
 	yamlsel_tmp1 = E("merlinclash_yamlsel").value;
@@ -2416,50 +2415,47 @@ function menu_hook(title, tab) {
 													<tr id="dns_ipv6">
 														<th>开启IPv6 DNS解析</th>
 															<td colspan="2">
+																<div class="switch_field" style="display:table-cell;float: left;">
 																<label for="merlinclash_ipv6switch">
-																	<input id="merlinclash_ipv6switch" type="checkbox" name="ipv6" >
+																	<input id="merlinclash_ipv6switch" type="checkbox" name="ipv6" class="switch" style="display: none;">
+																	<div class="switch_container" >
+																		<div class="switch_bar"></div>
+																		<div class="switch_circle transition_style">
+																			<div></div>
+																		</div>
+																	</div>
 																</label>
+																
+															</div>
 															</td>
 													</tr>
 												</table>
-											</div>
-											<!--
-											<div id="merlinclash-neteasemusic" style="margin:-1px 0px 0px 0px;">
+											</div>											
+											<div id="merlinclash-udp" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
 													<thead>
 														<tr>
-															<td colspan="2">网易云音乐解锁 --服务器解锁 <a href='https://github.com/DesperadoJ/Rules-for-UnblockNeteaseMusic' target="_blank"><em style="color: gold;">【感谢DesperadoJ提供的解锁服务器】</em></a></td>
+															<td colspan="2">UDP转发</td>
 														</tr>
 														</thead>
-													<tr id="neteasemusic">
-														<th>开启网易云音乐解锁</th>
+													<tr id="dns_plan">
+														<th>UDP转发(实验性功能)&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(9)"><em style="color: gold;">【试用必看】</em></a></th>
 															<td colspan="2">
-																<label for="merlinclash_nmswitch">
-																	<input id="merlinclash_nmswitch" type="checkbox" name="unblockneteasemusic" >
+																<div class="switch_field" style="display:table-cell;float: left;">
+																<label for="merlinclash_udpr">
+																	<input id="merlinclash_udpr" type="checkbox" name="udpr" class="switch" style="display: none;">
+																	<div class="switch_container" >
+																		<div class="switch_bar"></div>
+																		<div class="switch_circle transition_style">
+																			<div></div>
+																		</div>
+																	</div>
 																</label>
+																</div>
 															</td>
 													</tr>
 												</table>
 											</div>
-											
-											<div id="merlinclash-koolproxy" style="margin:-1px 0px 0px 0px;">
-												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >																							
-													<thead>
-														<tr>
-															<td colspan="2">兼容koolproxy --【仅限FAKE-IP模式】</td>
-														</tr>
-														</thead>
-													<tr id="koolproxy">
-														<th>开启koolproxy兼容</th>
-															<td colspan="2">
-																<label for="merlinclash_kpswitch">
-																	<input id="merlinclash_kpswitch" type="checkbox" name="koolproxy_compatible;" >
-																</label>
-															</td>
-													</tr>
-												</table>
-											</div>
-											-->
 											<div id="merlinclash-content-config" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="merlinclash_switch_table">
 													<thead>

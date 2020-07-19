@@ -1,3 +1,4 @@
 4d17f96f379b1573a2d0a502f641d716 merlinclash_07.07.beta1.tar.gz
 352cd3ae00a23acd878ebaa50f4e2cfb merlinclash_07.16.tar.gz
 858dbc4ac4147391540a280eafdbcf4b merlinclash_1.0.tar.gz
+9448dcf09179f2f77b1793172f2fc0e1 merlinclash_1.1.tar.gz

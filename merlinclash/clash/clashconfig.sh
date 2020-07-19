@@ -116,6 +116,12 @@ flush_nat() {
 	iptables -t nat -D PREROUTING -p tcp -j merlinclash
 	iptables -t nat -D PREROUTING -p tcp -i br0 -j merlinclash
 
+	
+	iptables -t nat -D clash_dns -p udp -j REDIRECT --to-ports 23453
+	iptables -t nat -D PREROUTING -p udp --dport 53 -j clash_dns
+	iptables -t nat -D OUTPUT -p udp --dport 53 -j clash_dns
+	iptables -t nat -F clash_dns >/dev/null 2>&1
+	iptables -t nat -X clash_dns >/dev/null 2>&1
 	#udp
 	#转发UDP流量到clash端口
 	iptables -t mangle -D merlinclash -d 192.168.2.1 -j RETURN
@@ -348,9 +354,16 @@ apply_nat_rules3() {
 		#iptables -t nat -A PREROUTING -j merlinclash
 		iptables -t nat -A PREROUTING -p tcp -j merlinclash
 		#DNS
-
-		iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 23453
-		#iptables -t nat -A PREROUTING -p udp -s $(get_lan_cidr) --dport 53 -j DNAT --to $lan_ipaddr >/dev/null 2>&1
+		if [ "$merlinclash_dnsplan" == "rh" ]; then
+			iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 23453
+		fi
+		if [ "$merlinclash_dnsplan" == "rhp" ]; then
+			iptables -t nat -N clash_dns >/dev/null 2>&1
+			iptables -t nat -F clash_dns >/dev/null 2>&1
+			iptables -t nat -A clash_dns -p udp -j REDIRECT --to-ports 23453
+			iptables -t nat -A PREROUTING -p udp --dport 53 -j clash_dns
+			iptables -t nat -A OUTPUT -p udp --dport 53 -j clash_dns
+		fi
 		
 	fi
 	#fake-ip rule
@@ -396,9 +409,11 @@ apply_nat_rules3() {
 		iptables -t mangle -N merlinclash
 		iptables -t mangle -F merlinclash
 		#绕过内网
-		iptables -t mangle -A merlinclash -d 192.168.2.1 -j RETURN
-
-		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -j RETURN
+		
+		#iptables -t mangle -A merlinclash -d 192.168.0.0/16 -j RETURN
+		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -p tcp -j RETURN
+		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -p udp ! --dport 53 -j RETURN
+		iptables -t mangle -A merlinclash -d 192.168.0.0/16 -p udp ! --dport 23453 -j RETURN
 		iptables -t mangle -A merlinclash -d 10.0.0.0/8 -j RETURN
 		iptables -t mangle -A merlinclash -d 0.0.0.0/8 -j RETURN
 		iptables -t mangle -A merlinclash -d 127.0.0.0/8 -j RETURN
@@ -684,8 +699,17 @@ check_unblockneteasemusic(){
 		fi
 		if [ "$merlinclash_unblockmusic_enable" == "1" ];then
 			echo_date "检测到开启网易云解锁功能，开始处理" >> $LOG_FILE	
+			[ ! -L "/www/ext/ca.crt" ] && ln -sf /jffs/softcenter/bin/Music/ca.crt /www/ext
 			sh /jffs/softcenter/scripts/clash_unblockneteasemusic.sh restart
 			sleep 1s
+			#write_unblock
+		else
+			echo_date "网易云解锁未开启" >> $LOG_FILE
+			sh /jffs/softcenter/scripts/clash_unblockneteasemusic.sh stop					
+		fi
+	fi
+}
+write_unblock(){
 			ubm_process=$(pidof UnblockNeteaseMusic);
 			if [ -n "$ubm_process" ]; then			
 				#获取proxies跟rules行号
@@ -762,11 +786,6 @@ check_unblockneteasemusic(){
 			else
 				echo_date "网易云音乐解锁无法启动" >> $LOG_FILE
 				dbus set $merlinclash_unblockmusic_enable="0";
-			fi
-		else
-			echo_date "网易云音乐本地解锁未开启" >> $LOG_FILE
-			sh /jffs/softcenter/scripts/clash_unblockneteasemusic.sh stop
-		fi
 	fi
 }
 auto_start() {
@@ -852,12 +871,8 @@ case $ACTION in
 start)
 	set_lock
 	if [ "$merlinclash_enable" == "1" ]; then
-		logger "[软件中心]: 开机启动MerlinClash插件！"
 		echo_date "[软件中心]: 开机启动MerlinClash插件！" >> $LOG_FILE
 		apply_mc >>"$LOG_FILE"
-	else
-		logger "[软件中心]: MerlinClash插件未开启，不启动！"
-		echo_date "[软件中心]: MerlinClash插件未开启，不启动！" >> $LOG_FILE
 	fi
 	unset_lock
 	;;
@@ -906,9 +921,6 @@ start_nat)
 		fi
 		apply_nat_rules3
 		echo_date "============= Merlin Clash iptable 重写完成=============" >> $LOG_FILE
-	else
-		logger "[软件中心]: MerlinClash插件未开启，不启动！"
-		echo_date "[软件中心]: MerlinClash插件未开启，不启动！" >> $LOG_FILE
 	fi
 	#unset_lock
 	;;

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 MODULE=merlinclash
-VERSION=`cat ./merlinclash/version|sed -n 1p`
+VERSION=1.1
 TITLE="Merlin Clash"
 DESCRIPTION="Merlin Clash"
 HOME_URL=Module_merlinclash.asp
@@ -16,7 +16,7 @@ do_build() {
 		echo "version not found"
 		exit 3
 	fi
-	
+	echo $VERSION > $MODULE/version
 	rm -f ${MODULE}.tar.gz
 	rm -f $MODULE/.DS_Store
 	rm -f $MODULE/*/.DS_Store

@@ -2,7 +2,7 @@ port: 3333
 socks-port: 23456
 redir-port: 23457
 allow-lan: true
-mode: Rule
+mode: rule
 log-level: error
 external-controller: 192.168.2.1:9990
 experimental:

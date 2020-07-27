@@ -8,177 +8,408 @@ rh=$dnsfile_path/redirhost.yaml
 rhp=$dnsfile_path/rhplus.yaml
 fi=$dnsfile_path/fakeip.yaml
 rm -rf /tmp/dnsfile.log
-echo_date $merlinclash_rh_nameserver1 >> /tmp/dnsfile.log
-echo_date $merlinclash_rh_nameserver2 >> /tmp/dnsfile.log
-echo_date $merlinclash_rh_nameserver3 >> /tmp/dnsfile.log
-	
-	if [ "$merlinclash_rh_nameserver1" == "" ]; then
+nflag="0"
+fflag="0"
+#行数固定说明
+#merlinclash_rh_nameserver1 第7行
+#merlinclash_rh_nameserver2 第8行
+#merlinclash_rh_nameserver3 第9行
+#merlinclash_rh_fallback1   第11行
+#merlinclash_rh_fallback2   第12行
+#merlinclash_rh_fallback3   第13行
+#cat $rh | grep -n $merlinclash_rh_nameserver1 | awk -F ":" '{print $1}' 获取指定字符串行数
+
+	n1=$merlinclash_rh_nameserver1
+	n2=$merlinclash_rh_nameserver2
+	n3=$merlinclash_rh_nameserver3
+	echo_date "测试" >> /tmp/upload/dnsfile.log
+	if [ -n "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="1"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="2"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="3"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="4"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="5"
+	elif  [ -n "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="6"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="7"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/upload/dnsfile.log
+	fi	
+	echo_date $nflag >> /tmp/dnsfile.log
+	echo_date $n1 >> /tmp/dnsfile.log
+	echo_date $n2 >> /tmp/dnsfile.log
+	echo_date $n3 >> /tmp/dnsfile.log
+	case $nflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $rh dns.nameserver[0] $n1
+		yq w -i $rh dns.nameserver[1] $n2
+		yq w -i $rh dns.nameserver[2] $n3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
 		yq d -i $rh dns.nameserver[0] 
-	fi
-	rhname1=$(echo $merlinclash_rh_nameserver1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhname1" ]; then
-		yq w -i $rh dns.nameserver[0] $merlinclash_rh_nameserver1	
+		yq w -i $rh dns.nameserver[0] $n2
+		yq w -i $rh dns.nameserver[1] $n3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $rh dns.nameserver[0]
+		yq d -i $rh dns.nameserver[1]
+		yq w -i $rh dns.nameserver[0] $n3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $rh dns.nameserver[1]
+		yq w -i $rh dns.nameserver[0] $n1
+		yq w -i $rh dns.nameserver[1] $n3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $rh dns.nameserver[0] $n1
+		yq d -i $rh dns.nameserver[1]
+		yq d -i $rh dns.nameserver[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $rh dns.nameserver[0] $n1
+		yq w -i $rh dns.nameserver[1] $n2
+		yq d -i $rh dns.nameserver[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $rh dns.nameserver[2]
+		yq d -i $rh dns.nameserver[0]
+		yq w -i $rh dns.nameserver[0] $n1
+	esac
+
+	f1=$merlinclash_rh_fallback1
+	f2=$merlinclash_rh_fallback2
+	f3=$merlinclash_rh_fallback3
+	if [ -n "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="1"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="2"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="3"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="4"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="5"
+	elif  [ -n "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="6"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="7"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/dnsfile.log
 	fi
 
-	if [ "$merlinclash_rh_nameserver2" == "" ]; then
-		yq d -i $rh dns.nameserver[1] 
-	fi
-	rhname2=$(echo $merlinclash_rh_nameserver2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhname2" ]; then
-		yq w -i $rh dns.nameserver[1] $merlinclash_rh_nameserver2	
-	fi
-
-	if [ "$merlinclash_rh_nameserver3" == "" ]; then
-		yq d -i $rh dns.nameserver[2] 
-	fi
-	rhname3=$(echo $merlinclash_rh_nameserver3 | grep ^[a-zA-Z1-9] )
-	echo_date $rhname3 >> /tmp/dnsfile.log
-	if [ -n "$rhname3" ]; then
-		echo_date "写入" >> /tmp/dnsfile.log
-		yq w -i $rh dns.nameserver[1] $merlinclash_rh_nameserver3	
-	fi
-
-	echo_date "fb1=$merlinclash_rh_fallback1" >> /tmp/dnsfile.log
-	if [ "$merlinclash_rh_fallback1" == "" ]; then
-		echo_date "fb1为空，删除fb1" >> /tmp/dnsfile.log
+	case $fflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $rh dns.fallback[0] $f1
+		yq w -i $rh dns.fallback[1] $f2
+		yq w -i $rh dns.fallback[2] $f3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
 		yq d -i $rh dns.fallback[0] 
-	fi
-	rhfallback1=$(echo $merlinclash_rh_fallback1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhfallback1" ]; then
-		echo_date "写入fb1" >> /tmp/dnsfile.log
-		yq w -i $rh dns.fallback[0] $merlinclash_rh_fallback1	
-	fi
+		yq w -i $rh dns.fallback[0] $f2
+		yq w -i $rh dns.fallback[1] $f3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $rh dns.fallback[0]
+		yq d -i $rh dns.fallback[1]
+		yq w -i $rh dns.fallback[0] $f3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $rh dns.fallback[1]
+		yq w -i $rh dns.fallback[0] $f1
+		yq w -i $rh dns.fallback[1] $f3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $rh dns.fallback[0] $f1
+		yq d -i $rh dns.fallback[1]
+		yq d -i $rh dns.fallback[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $rh dns.fallback[0] $f1
+		yq w -i $rh dns.fallback[1] $f2
+		yq d -i $rh dns.fallback[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $rh dns.fallback[2]
+		yq d -i $rh dns.fallback[0]
+		yq w -i $rh dns.fallback[0] $f1
+	esac
 
-	if [ "$merlinclash_rh_fallback2" == "" ]; then
-		yq d -i $rh dns.fallback[1] 
-	fi
-	rhfallback2=$(echo $merlinclash_rh_fallback2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhfallback2" ]; then
-		yq w -i $rh dns.fallback[1] $merlinclash_rh_fallback2	
-	fi
-
-	if [ "$merlinclash_rh_fallback3" == "" ]; then
-		yq d -i $rh dns.fallback[2] 
-	fi
-	rhfallback3=$(echo $merlinclash_rh_fallback3 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhfallback3" ]; then
-		yq w -i $rh dns.fallback[2] $merlinclash_rh_fallback3	
-	fi
-	
-	rhfb=$(yq r $rh dns.fallback)
-	if [ "$rhfb" == "[]" ]; then
-		yq d -i $rh dns.fallback
-	fi	
 ###################################################################
-	if [ "$merlinclash_rhp_nameserver1" == "" ]; then
+	n1=$merlinclash_rhp_nameserver1
+	n2=$merlinclash_rhp_nameserver2
+	n3=$merlinclash_rhp_nameserver3
+	echo_date "测试" >> /tmp/dnsfile.log
+	if [ -n "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="1"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="2"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="3"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="4"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="5"
+	elif  [ -n "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="6"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="7"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/dnsfile.log
+	fi	
+	echo_date $nflag >> /tmp/dnsfile.log
+	echo_date $n1 >> /tmp/dnsfile.log
+	echo_date $n2 >> /tmp/dnsfile.log
+	echo_date $n3 >> /tmp/dnsfile.log
+	case $nflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $rhp dns.nameserver[0] $n1
+		yq w -i $rhp dns.nameserver[1] $n2
+		yq w -i $rhp dns.nameserver[2] $n3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
 		yq d -i $rhp dns.nameserver[0] 
-	fi
-	rhpname1=$(echo $merlinclash_rhp_nameserver1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpname1" ]; then
-		yq w -i $rhp dns.nameserver[0] $merlinclash_rhp_nameserver1	
+		yq w -i $rhp dns.nameserver[0] $n2
+		yq w -i $rhp dns.nameserver[1] $n3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $rhp dns.nameserver[0]
+		yq d -i $rhp dns.nameserver[1]
+		yq w -i $rhp dns.nameserver[0] $n3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $rhp dns.nameserver[1]
+		yq w -i $rhp dns.nameserver[0] $n1
+		yq w -i $rhp dns.nameserver[1] $n3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $rhp dns.nameserver[0] $n1
+		yq d -i $rhp dns.nameserver[1]
+		yq d -i $rhp dns.nameserver[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $rhp dns.nameserver[0] $n1
+		yq w -i $rhp dns.nameserver[1] $n2
+		yq d -i $rhp dns.nameserver[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $rhp dns.nameserver[2]
+		yq d -i $rhp dns.nameserver[0]
+		yq w -i $rhp dns.nameserver[0] $n1
+	esac
+
+	f1=$merlinclash_rhp_fallback1
+	f2=$merlinclash_rhp_fallback2
+	f3=$merlinclash_rhp_fallback3
+	if [ -n "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="1"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="2"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="3"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="4"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="5"
+	elif  [ -n "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="6"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="7"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/dnsfile.log
 	fi
 
-	if [ "$merlinclash_rhp_nameserver2" == "" ]; then
-		yq d -i $rhp dns.nameserver[1] 
-	fi
-	rhpname2=$(echo $merlinclash_rhp_nameserver2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpname2" ]; then
-		yq w -i $rhp dns.nameserver[1] $merlinclash_rhp_nameserver2	
-	fi
-
-	if [ "$merlinclash_rhp_nameserver3" == "" ]; then
-		yq d -i $rhp dns.nameserver[2] 
-	fi
-	rhpname3=$(echo $merlinclash_rhp_nameserver3 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpname3" ]; then
-		yq w -i $rhp dns.nameserver[2] $merlinclash_rhp_nameserver3	
-	fi
-
-	if [ "$merlinclash_rhp_fallback1" == "" ]; then
+	case $fflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $rhp dns.fallback[0] $f1
+		yq w -i $rhp dns.fallback[1] $f2
+		yq w -i $rhp dns.fallback[2] $f3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
 		yq d -i $rhp dns.fallback[0] 
-	fi
-	rhpfallback1=$(echo $merlinclash_rhp_fallback1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpfallback1" ]; then
-		yq w -i $rhp dns.fallback[0] $merlinclash_rhp_fallback1	
-	fi
-
-	if [ "$merlinclash_rhp_fallback2" == "" ]; then
-		yq d -i $rhp dns.fallback[1] 
-	fi
-	rhpfallback2=$(echo $merlinclash_rhp_fallback2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpfallback2" ]; then
-		yq w -i $rhp dns.fallback[1] $merlinclash_rhp_fallback2	
-	fi
-
-	if [ "$merlinclash_rhp_fallback3" == "" ]; then
-		yq d -i $rhp dns.fallback[2] 
-	fi
-	rhpfallback3=$(echo $merlinclash_rhp_fallback3 | grep ^[a-zA-Z1-9] )
-	if [ -n "$rhpfallback3" ]; then
-		yq w -i $rhp dns.fallback[2] $merlinclash_rhp_fallback3	
-	fi
-
-	rhpfb=$(yq r $rhp dns.fallback)
-	if [ "$rhpfb" == "[]" ]; then
-		yq d -i $rhp dns.fallback
-	fi	
+		yq w -i $rhp dns.fallback[0] $f2
+		yq w -i $rhp dns.fallback[1] $f3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $rhp dns.fallback[0]
+		yq d -i $rhp dns.fallback[1]
+		yq w -i $rhp dns.fallback[0] $f3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $rhp dns.fallback[1]
+		yq w -i $rhp dns.fallback[0] $f1
+		yq w -i $rhp dns.fallback[1] $f3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $rhp dns.fallback[0] $f1
+		yq d -i $rhp dns.fallback[1]
+		yq d -i $rhp dns.fallback[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $rhp dns.fallback[0] $f1
+		yq w -i $rhp dns.fallback[1] $f2
+		yq d -i $rhp dns.fallback[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $rhp dns.fallback[2]
+		yq d -i $rhp dns.fallback[0]
+		yq w -i $rhp dns.fallback[0] $f1
+	esac
 
 ###################################################################
-	if [ "$merlinclash_fi_nameserver1" == "" ]; then
-		yq d -i $fi dns.nameserver[0] 
-	fi
-	finame1=$(echo $merlinclash_fi_nameserver1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$finame1" ]; then
-		yq w -i $fi dns.nameserver[0] $merlinclash_fi_nameserver1	
-	fi
-
-	if [ "$merlinclash_fi_nameserver2" == "" ]; then
-		yq d -i $fi dns.nameserver[1] 
-	fi
-	finame2=$(echo $merlinclash_fi_nameserver2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$finame2" ]; then
-		yq w -i $fi dns.nameserver[1] $merlinclash_fi_nameserver2	
-	fi
-
-	if [ "$merlinclash_fi_nameserver3" == "" ]; then
-		yq d -i $fi dns.nameserver[2] 
-	fi
-	finame3=$(echo $merlinclash_fi_nameserver3 | grep ^[a-zA-Z1-9] )
-	if [ -n "$finame3" ]; then
-		yq w -i $fi dns.nameserver[2] $merlinclash_fi_nameserver3	
-	fi
-
-	if [ "$merlinclash_fi_fallback1" == "" ]; then
-		yq d -i $fi dns.fallback[0] 
-	fi
-	fifallback1=$(echo $merlinclash_fi_fallback1 | grep ^[a-zA-Z1-9] )
-	if [ -n "$fifallback1" ]; then
-		yq w -i $fi dns.fallback[0] $merlinclash_fi_fallback1	
-	fi
-
-	if [ "$merlinclash_fi_fallback2" == "" ]; then
-		yq d -i $fi dns.fallback[1] 
-	fi
-	fifallback2=$(echo $merlinclash_fi_fallback2 | grep ^[a-zA-Z1-9] )
-	if [ -n "$fifallback2" ]; then
-		yq w -i $fi dns.fallback[1] $merlinclash_fi_fallback2	
-	fi
-
-	if [ "$merlinclash_fi_fallback3" == "" ]; then
-		yq d -i $fi dns.fallback[2] 
-	fi
-	fifallback3=$(echo $merlinclash_fi_fallback3 | grep ^[a-zA-Z1-9] )
-	if [ -n "$fifallback3" ]; then
-		yq w -i $fi dns.fallback[2] $merlinclash_fi_fallback3	
-	fi
-
-	fifb=$(yq r $fi dns.fallback)
-	if [ "$fifb" == "[]" ]; then
-		yq d -i $fi dns.fallback
+	n1=$merlinclash_fi_nameserver1
+	n2=$merlinclash_fi_nameserver2
+	n3=$merlinclash_fi_nameserver3
+	echo_date "测试" >> /tmp/dnsfile.log
+	if [ -n "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="1"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -n "$n3" ]; then
+		nflag="2"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="3"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -n "$n3" ]; then
+		nflag="4"
+	elif  [ -n "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="5"
+	elif  [ -n "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="6"
+	elif  [ -z "$n1" ] && [ -z "$n2" ] && [ -z "$n3" ]; then
+		nflag="7"
+	elif  [ -z "$n1" ] && [ -n "$n2" ] && [ -z "$n3" ]; then
+		nflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/dnsfile.log
 	fi	
+	echo_date $nflag >> /tmp/dnsfile.log
+	echo_date $n1 >> /tmp/dnsfile.log
+	echo_date $n2 >> /tmp/dnsfile.log
+	echo_date $n3 >> /tmp/dnsfile.log
+	case $nflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $fi dns.nameserver[0] $n1
+		yq w -i $fi dns.nameserver[1] $n2
+		yq w -i $fi dns.nameserver[2] $n3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
+		yq d -i $fi dns.nameserver[0] 
+		yq w -i $fi dns.nameserver[0] $n2
+		yq w -i $fi dns.nameserver[1] $n3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $fi dns.nameserver[0]
+		yq d -i $fi dns.nameserver[1]
+		yq w -i $fi dns.nameserver[0] $n3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $fi dns.nameserver[1]
+		yq w -i $fi dns.nameserver[0] $n1
+		yq w -i $fi dns.nameserver[1] $n3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $fi dns.nameserver[0] $n1
+		yq d -i $fi dns.nameserver[1]
+		yq d -i $fi dns.nameserver[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $fi dns.nameserver[0] $n1
+		yq w -i $fi dns.nameserver[1] $n2
+		yq d -i $fi dns.nameserver[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $fi dns.nameserver[2]
+		yq d -i $fi dns.nameserver[0]
+		yq w -i $fi dns.nameserver[0] $n1
+	esac
 
+	f1=$merlinclash_fi_fallback1
+	f2=$merlinclash_fi_fallback2
+	f3=$merlinclash_fi_fallback3
+	if [ -n "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="1"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -n "$f3" ]; then
+		fflag="2"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="3"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -n "$f3" ]; then
+		fflag="4"
+	elif  [ -n "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="5"
+	elif  [ -n "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="6"
+	elif  [ -z "$f1" ] && [ -z "$f2" ] && [ -z "$f3" ]; then
+		fflag="7"
+	elif  [ -z "$f1" ] && [ -n "$f2" ] && [ -z "$f3" ]; then
+		fflag="8"
+	else
+		echo_date "啥都没有" >> /tmp/dnsfile.log
+	fi
 
-http_response "success"
+	case $fflag in
+	1)	#三者均有数值，则进行对应替换
+		yq w -i $fi dns.fallback[0] $f1
+		yq w -i $fi dns.fallback[1] $f2
+		yq w -i $fi dns.fallback[2] $f3
+		;;
+	2)	#1无2有3有，则删除1，然后重写1.2的值
+		yq d -i $fi dns.fallback[0] 
+		yq w -i $fi dns.fallback[0] $f2
+		yq w -i $fi dns.fallback[1] $f3
+		;;
+	3)	#1无2无3有，删除1,2，3写入1
+		yq d -i $fi dns.fallback[0]
+		yq d -i $fi dns.fallback[1]
+		yq w -i $fi dns.fallback[0] $f3 
+		;;
+	4)	#1有2无3有，删除2,1重写，3写入2
+		yq d -i $fi dns.fallback[1]
+		yq w -i $fi dns.fallback[0] $f1
+		yq w -i $fi dns.fallback[1] $f3	
+		;;
+	5)	#1有2无3无，重写1，删除2,3
+		yq w -i $fi dns.fallback[0] $f1
+		yq d -i $fi dns.fallback[1]
+		yq d -i $fi dns.fallback[2]		
+		;;
+	6)	#1有2有3无，重写1,2，删除3
+		yq w -i $fi dns.fallback[0] $f1
+		yq w -i $fi dns.fallback[1] $f2
+		yq d -i $fi dns.fallback[2]
+		;;
+	7)	#123全无 不处理！
+		echo_date "全空白，不处理" >> /tmp/dnsfile.log
+		;;
+	8)	#1无2有3无,删除3，删除1,2写入1
+		yq d -i $fi dns.fallback[2]
+		yq d -i $fi dns.fallback[0]
+		yq w -i $fi dns.fallback[0] $f1
+	esac
 
-
+#http_response "success"
 

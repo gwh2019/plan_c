@@ -6,11 +6,20 @@ source /jffs/softcenter/scripts/base.sh
 eval $(dbus export merlinclash_)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 LOG_FILE=/tmp/merlinclash_log.txt
-rule_version="20200624"
+
+head_tmp=/jffs/softcenter/merlinclash/yaml/head.yaml
+lan_ip=$(nvram get lan_ipaddr)
 rm -rf /tmp/merlinclash_log.txt
 rm -rf /tmp/*.yaml
 cp -rf /jffs/softcenter/merlinclash/yaml/proxies.yaml /tmp/proxies.yaml
-cp -rf /jffs/softcenter/merlinclash/yaml/proxy-group.yaml /tmp/proxy-group.yaml
+if [ "$merlinclash_localrulesel" == "常规规则" ]; then 
+	cp -rf /jffs/softcenter/merlinclash/yaml/proxy-group.yaml /tmp/proxy-group.yaml
+	rule_version=$merlinclash_proxygroup_version
+fi
+if [ "$merlinclash_localrulesel" == "游戏规则" ]; then 
+	cp -rf /jffs/softcenter/merlinclash/yaml/proxy-group-game.yaml /tmp/proxy-group-game.yaml
+	rule_version=$merlinclash_proxygame_version
+fi
 LOCK_FILE=/var/lock/yaml_online_update.lock
 flag=0
 upname=""
@@ -113,7 +122,7 @@ get_oneline_rule_now(){
 			NODE_FORMAT2=$(cat /tmp/clash_subscribe_file_temp1.txt | grep -E "^ssr://")
 			NODE_FORMAT3=$(cat /tmp/clash_subscribe_file_temp1.txt | grep -E "^vmess://")
 			NODE_FORMAT4=$(cat /tmp/clash_subscribe_file_temp1.txt | grep -E "^trojan://")
-			echo_date "即将创建yaml格式文件，当前使用规则版本为:$rule_version"
+			echo_date "即将创建yaml格式文件，当前使用规则类型为:$merlinclash_localrulesel,版本为:$rule_version" >> $LOG_FILE
 			#ss节点
 			if [ -n "$NODE_FORMAT1" ]; then
 				# 每次更新后进行初始化
@@ -376,10 +385,10 @@ add_ssr_nodes(){
 	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
 	yq w -i /tmp/proxies.yaml proxies[$num].cipher $encrypt_method
 	yq w -i /tmp/proxies.yaml proxies[$num].password $password
-	yq w -i /tmp/proxies.yaml proxies[$num].protocol $protocol
-	yq w -i /tmp/proxies.yaml proxies[$num].protocolparam $protoparam
-	yq w -i /tmp/proxies.yaml proxies[$num].obfs $obfs
-	yq w -i /tmp/proxies.yaml proxies[$num].obfsparam $obfsparam
+	[ -n "$protocol" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocol $protocol
+	[ -n "$protoparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocolparam $protoparam
+	[ -n "$obfs" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfs $obfs
+	[ -n "$obfsparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfsparam $obfsparam
 	let num++
 }
 get_ssr_node_info(){
@@ -393,8 +402,11 @@ get_ssr_node_info(){
 	#password=$(echo $password | base64_encode | sed 's/\s//g')
 	
 	obfsparam_temp=$(echo "$decode_link" | awk -F':' '{print $6}' | grep -Eo "obfsparam.+" | sed 's/obfsparam=//g' | awk -F'&' '{print $1}')
-	[ -n "$obfsparam_temp" ] && obfsparam=$(decode_url_link $obfsparam_temp) || obfsparam=''
-	
+	if [ -n "$obfsparam_temp" ]; then
+		obfsparam=$(decode_url_link $obfsparam_temp)
+	else
+		obfsparam="www.microsoft.com"
+	fi
 	protoparam_temp=$(echo "$decode_link" | awk -F':' '{print $6}' | grep -Eo "protoparam.+" | sed 's/protoparam=//g' | awk -F'&' '{print $1}')
 	[ -n "$protoparam_temp" ] && protoparam=$(decode_url_link $protoparam_temp | sed 's/_compatible//g') || protoparam=''
 	
@@ -479,14 +491,33 @@ write_yaml(){
 	done
 	proxy=$(echo $str |  awk '{print substr($1,2)}')
 	sleep 2s
-
-	sed -i "s/url-test, proxies,/url-test, proxies: [$proxy],/g" /tmp/proxy-group.yaml
-	sed -i "s/fallback, proxies,/fallback, proxies: [$proxy],/g" /tmp/proxy-group.yaml
-	sed -i "s/load-balance, proxies,/load-balance, proxies: [$proxy],/g" /tmp/proxy-group.yaml
-	sed -i "s/type: select, proxies}/type: select, proxies: [$proxy]}/g" /tmp/proxy-group.yaml
-	echo_date "写入完成,将对文件进行合并"
+	if [ "$merlinclash_localrulesel" == "常规规则" ]; then 		
+		sed -i "s/url-test, proxies,/url-test, proxies: [$proxy],/g" /tmp/proxy-group.yaml
+		sed -i "s/fallback, proxies,/fallback, proxies: [$proxy],/g" /tmp/proxy-group.yaml
+		sed -i "s/load-balance, proxies,/load-balance, proxies: [$proxy],/g" /tmp/proxy-group.yaml
+		sed -i "s/type: select, proxies}/type: select, proxies: [$proxy]}/g" /tmp/proxy-group.yaml
+		echo_date "写入完成,将对文件进行合并"
 	#yq m -x -i /tmp/proxies.yaml /tmp/proxy-group.yaml
-	cat /tmp/proxy-group.yaml >> /tmp/proxies.yaml
+		sed -i '$a' /tmp/proxies.yaml
+		cat /tmp/proxy-group.yaml >> /tmp/proxies.yaml
+		sed -i '$a' /tmp/proxies.yaml
+		cat $head_tmp >> /tmp/proxies.yaml
+		echo_date "标准头文件合并完毕" >> $LOG_FILE
+		#对external-controller赋值
+		#yq w -i $yaml_tmp external-controller $lan_ip:9990
+		sed -i "s/192.168.2.1:9990/$lan_ip:9990/g" /tmp/proxies.yaml
+
+		#写入hosts
+		#yq w -i $yaml_tmp 'hosts.[router.asus.com]' $lan_ip
+		sed -i '$a hosts:' /tmp/upload/proxies.yaml
+		sed -i '$a \ \ router.asus.com: '"$lan_ip"'' /tmp/upload/proxies.yaml
+	fi
+
+	if [ "$merlinclash_localrulesel" == "游戏规则" ]; then 
+		sed -i "s/type: select, proxies}/type: select, proxies: [$proxy]}/g" /tmp/proxy-group-game.yaml
+		echo_date "写入完成,将对文件进行合并"
+		cat /tmp/proxy-group-game.yaml >> /tmp/proxies.yaml
+	fi
 	echo_date "合并完毕"
 	rename_yaml
 }
@@ -499,7 +530,13 @@ rename_yaml(){
 	else
 		upname=$newname.yaml
 	fi
-	echo_date "文件重命名后复制到/jffs/softcenter/merlinclash/yaml_bak以及/jffs/softcenter/merlinclash/"
+	if [ "$merlinclash_localrulesel" == "常规规则" ]; then 
+		upname=local_$upname
+	fi
+	if [ "$merlinclash_localrulesel" == "游戏规则" ]; then 
+		upname=game_$upname
+	fi
+	echo_date "文件重命名后复制到/jffs/softcenter/merlinclash/yaml_bak"
 	cp -rf /tmp/proxies.yaml /jffs/softcenter/merlinclash/yaml_bak/$upname
 	cp -rf /tmp/proxies.yaml /jffs/softcenter/merlinclash/$upname
 	#清理残留

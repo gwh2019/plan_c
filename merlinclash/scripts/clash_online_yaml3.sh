@@ -6,7 +6,9 @@ eval $(dbus export ss)
 eval $(dbus export merlinclash_)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 LOG_FILE=/tmp/merlinclash_log.txt
-rule_version="20200624"
+head_tmp=/jffs/softcenter/merlinclash/yaml/head.yaml
+lan_ip=$(nvram get lan_ipaddr)
+rule_version=$merlinclash_proxygroup_version
 rm -rf /tmp/merlinclash_log.txt
 rm -rf /tmp/*.yaml
 cp -rf /jffs/softcenter/merlinclash/yaml/proxies.yaml /tmp/proxies.yaml
@@ -202,8 +204,18 @@ write_yaml(){
 	sed -i "s/type: select, proxies}/type: select, proxies: [$proxy]}/g" /tmp/proxy-group.yaml
 	echo_date "写入完成,将对文件进行合并"
 	#yq m -x -i /tmp/proxies.yaml /tmp/proxy-group.yaml
+	sed -i '$a' /tmp/proxies.yaml
 	cat /tmp/proxy-group.yaml >> /tmp/proxies.yaml
-	echo_date "合并完毕"
+	sed -i '$a' /tmp/proxies.yaml
+	cat $head_tmp >> /tmp/proxies.yaml
+	echo_date "标准头文件合并完毕" >> $LOG_FILE
+	#对external-controller赋值
+	#yq w -i $yaml_tmp external-controller $lan_ip:9990
+	sed -i "s/192.168.2.1:9990/$lan_ip:9990/g" /tmp/proxies.yaml
+	#写入hosts
+	#yq w -i $yaml_tmp 'hosts.[router.asus.com]' $lan_ip
+	sed -i '$a hosts:' /tmp/proxies.yaml
+	sed -i '$a \ \ router.asus.com: '"$lan_ip"'' /tmp/proxies.yaml
 	rename_yaml
 }
 rename_yaml(){

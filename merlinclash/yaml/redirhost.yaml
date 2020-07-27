@@ -1,12 +1,11 @@
 dns:
-   enable: true
-   ipv6: false
-   listen: 0.0.0.0:23453
-   enhanced-mode: redir-host 
-   nameserver:
-     - https://223.5.5.5/dns-query
-     - 223.5.5.5
-     - tls://dns.alidns.com:853
-   fallback:
-     - tls://1.1.1.1:853
-     - tls://dns.google
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:23453
+  enhanced-mode: redir-host 
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://223.5.5.5/dns-query
+  fallback:
+    - tls://1.1.1.1:853
+    - tls://dns.google

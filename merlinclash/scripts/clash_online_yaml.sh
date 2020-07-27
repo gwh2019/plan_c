@@ -4,7 +4,6 @@ source /jffs/softcenter/scripts/base.sh
 eval $(dbus export merlinclash_)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 LOG_FILE=/tmp/merlinclash_log.txt
-lan_ip=$(nvram get lan_ipaddr)
 rm -rf /tmp/merlinclash_log.txt
 rm -rf /tmp/*.yaml
 LOCK_FILE=/var/lock/yaml_online_update.lock
@@ -54,7 +53,7 @@ check_yamlfile(){
 	para1=$(sed -n '/^port:/p' /tmp/$upname)
 	para1_1=$(sed -n '/^mixed-port:/p' /tmp/$upname)
 	para2=$(sed -n '/^socks-port:/p' /tmp/$upname)
-	para3=$(sed -n '/^mode:/p' /tmp/$upname)
+	#para3=$(sed -n '/^mode:/p' /tmp/$upname)
 	#para4=$(sed -n '/^name:/p' /tmp/upload.yaml)
 	#para5=$(sed -n '/^type:/p' /tmp/upload.yaml)
 	if ([ ! -n "$para1" ] && [ ! -n "$para1_1" ]) && [ ! -n "$para2" ]; then

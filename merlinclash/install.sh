@@ -108,7 +108,8 @@ dbus set softcenter_module_merlinclash_install="1"
 dbus set softcenter_module_merlinclash_version="$CUR_VERSION"
 dbus set softcenter_module_merlinclash_title="Merlin Clash"
 dbus set softcenter_module_merlinclash_description="Merlin Clash"
-
+dbus set merlinclash_proxygroup_version="2020070101"
+dbus set merlinclash_proxygame_version="2020070101"
 echo_date 一点点清理工作...
 rm -rf /tmp/clash* >/dev/null 2>&1
 

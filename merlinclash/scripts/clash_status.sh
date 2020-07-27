@@ -58,9 +58,16 @@ fi
 
 #内置规则文件版本
 if [ "$merlinclash_proxygroup_version" != "" ]; then
-    text10="<span style='color: gold'>当前版本：$merlinclash_proxygroup_version</span>"
+    text10="<span style='color: gold'>当前版本：v$merlinclash_proxygroup_version</span>"
 else    
-    text10="<span style='color: gold'>当前版本：0</span>"
+    text10="<span style='color: gold'>当前版本：v0</span>"
 fi
-echo "$text1@$text2@$host@$port@$secret@$text3@$text4@$yamlsel_tmp2@$text8@$text9@$text10" > /tmp/merlinclash.log
+#内置游戏规则文件版本
+ggver=$merlinclash_proxygame_version
+if [ "$ggver" != "" ]; then
+    text11="<span style='color: gold'>当前版本：g$merlinclash_proxygame_version</span>"
+else    
+    text11="<span style='color: gold'>当前版本：g0</span>"
+fi
+echo "$text1@$text2@$host@$port@$secret@$text3@$text4@$yamlsel_tmp2@$text8@$text9@$text10@$text11" > /tmp/merlinclash.log
 

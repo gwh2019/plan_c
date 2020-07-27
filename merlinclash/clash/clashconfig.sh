@@ -11,7 +11,6 @@ yamlpath=/jffs/softcenter/merlinclash/$yamlname.yaml
 chromecast_nu=""
 lan_ipaddr=$(nvram get lan_ipaddr)
 ssh_port=$(nvram get sshd_port)
-dem=$(yq r $yamlpath dns.enhanced-mode)
 head_tmp=/jffs/softcenter/merlinclash/yaml/head.yaml
 
 ip_prefix_hex=$(nvram get lan_ipaddr | awk -F "." '{printf ("0x%02x", $1)} {printf ("%02x", $2)} {printf ("%02x", $3)} {printf ("00/0xffffff00\n")}')
@@ -153,7 +152,7 @@ close_in_five() {
 	echo_date "插件将在5秒后自动关闭！！"
 	local i=5
 	while [ $i -ge 0 ]; do
-		sleep 1
+		sleep 1s
 		echo_date $i
 		let i--
 	done
@@ -182,7 +181,7 @@ check_rule() {
 			num1=$(($num+1))
 			rules_line=$(sed -n -e '/^rules:/=' $yamlpath)
 			echo_date "写入第$num1条自定规则到当前配置文件" >> $LOG_FILE
-			#yq w -i $yamlpath "rules[$num]" "$type","$content","$lianjie"
+			
 			sed "$rules_line a \ \ -\ $type,$content,$lianjie" -i $yamlpath
 			let num++
 		done
@@ -193,11 +192,42 @@ check_rule() {
 	dbus remove merlinclash_acl_content
 	dbus remove merlinclash_acl_lianjie
 }
+lan_bypass(){
+	# deivce_nu 获取已存数据序号
+	echo_date ---------------------- 设备绕行检查区 开始 ------------------------ >> $LOG_FILE
+	echo_date "【检查是否存在设备绕行】" >> $LOG_FILE
+	device_nu=$(dbus list merlinclash_device_ip_ | cut -d "=" -f 1 | cut -d "_" -f 4 | sort -n)
+	num=0
+	if [ -n "$device_nu" ]; then
+		echo_date "【已设置设备绕行，将写入iptables】" >> $LOG_FILE
+		for device in $device_nu; do
+			ip=$(eval echo \$merlinclash_device_ip_$device)
+			name=$(eval echo \$merlinclash_device_name_$device)
+			echo_date "绕行设备名为【$name】,IP为【$ip】"
+			#写入绕行规则到iptables
+			iptables -t nat -I merlinclash -s $ip/32 -j RETURN
+  			iptables -t mangle -I merlinclash -s $ip/32 -j RETURN
+		done
+	else
+		echo_date "没有设置设备绕行" >> $LOG_FILE	
+	fi
+	dbus remove merlinclash_device_ip
+	dbus remove merlinclash_device_name
+	echo_date ---------------------- 设备绕行检查区 结束 ------------------------ >> $LOG_FILE
+}
 start_bind(){
 	pgnodes_nu=$(dbus list merlinclash_pgnodes_nodesel_ | cut -d "=" -f 1 | cut -d "_" -f 4 | sort -n)
 	pgnum=0
 	if [ -n "$pgnodes_nu" ] ; then
 		echo_date "检查到已配置节点记忆，将对策略组进行处理" >> $LOG_FILE
+		#将/jffs/softcenter/merlinclash/$yamlname.yaml中的proxy-groups导出
+		#定位proxy-group:跟rules:行数
+		proxygroup_line=$(cat $yamlpath | grep -n "^proxy-groups:" | awk -F ":" '{print $1}')
+		rules_line=$(cat $yamlpath | grep -n "^rules:" | awk -F ":" '{print $1}')
+		let rules_line=$rules_line-1
+		sed -n "$proxygroup_line,$rules_line p" $yamlpath > /tmp/b.yaml
+		#删除原有
+		sed -i "$proxygroup_line,$rules_line d" $yamlpath
 		for pgnode in $pgnodes_nu; do
 			proxygroup=$(eval echo \$merlinclash_pgnodes_proxygroup_$pgnode)
 			nodesel=$(eval echo \$merlinclash_pgnodes_nodesel_$pgnode)
@@ -206,10 +236,15 @@ start_bind(){
 			#对proxygroup值进行分割，取序号
 			order=$(echo $proxygroup | awk -F"." '{print $1}')
 			let order=order-1
-			#选中节点查到对应策略组最前
-			yq w -i $yamlpath proxy-groups[$order].proxies[+0] "$nodesel"
-
-
+			#选中节点插到对应策略组最前
+			#  order proxygroup      nodesel
+			#比如12.聊天软件 --> [Trojan]台湾测试
+			#yq w -i $yamlpath proxy-groups[$order].proxies[+0] "$nodesel"
+			yq w -i /tmp/b.yaml proxy-groups[$order].proxies[+0] "$nodesel"
+			#再将b.yaml内容导回去$yamlpath
+			#插入换行符免得出错
+			sed -i '$a' $yamlpath
+			cat /tmp/b.yaml >> $yamlpath
 		done
 	else
 		echo_date "未配置节点记忆" >> $LOG_FILE
@@ -269,7 +304,7 @@ load_nat() {
 			echo_date "错误：不能正确加载nat规则!" >> $LOG_FILE
 			close_in_five
 		fi
-		sleep 1
+		sleep 1s
 		nat_ready=$(iptables -t nat -L PREROUTING -v -n --line-numbers | grep -v PREROUTING | grep -v destination)
 	done
 	echo_date "加载nat规则!" >> $LOG_FILE
@@ -330,7 +365,7 @@ load_tproxy() {
 apply_nat_rules3() {
 	proxy_port=23457
 	#ssh_port=22
-	dem2=$(yq r $yamlpath dns.enhanced-mode)
+	dem2=$(cat $yamlpath | grep "enhanced-mode:" | awk -F "[: ]" '{print $5}')
 	echo_date "开始写入iptable规则" >> $LOG_FILE
 	
 	if [ "$merlinclash_dnsplan" == "rh" ] || [ "$merlinclash_dnsplan" == "rhp" ] || [ "$dem2" == "redir-host" ];then
@@ -427,9 +462,11 @@ apply_nat_rules3() {
 		iptables -t mangle -A PREROUTING -p udp -i $bridge -j merlinclash
 		#iptables -t mangle -A PREROUTING -p udp -j merlinclash
 	else
-		echo_date "检测到udp转发未开启，进行下一步" >> $LOG_FILE
+		echo_date "【检测到udp转发未开启，进行下一步】" >> $LOG_FILE
 
 	fi
+	#设备绕行
+	lan_bypass
 
 	echo_date "iptable规则创建完成" >> $LOG_FILE
 }
@@ -442,7 +479,7 @@ start_clash(){
 	echo_date "启用$yamlname YAML配置" >> $LOG_FILE
 	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>/tmp/clash_error.log &
 	#检查clash进程
-	sleep 2s
+	sleep 1s
 	pid_clash=$(pidof clash)
 	if [ -n "$pid_clash" ]; then
 		echo_date "Clash 进程启动成功！(PID: $pid_clash)"
@@ -451,14 +488,18 @@ start_clash(){
 		#cp -rf $yamlpath /tmp/view.txt 
 		ln -sf $yamlpath /tmp/view.txt 
 		#20200706读取当前配置proxy-groups保存
-		yq r $yamlpath proxy-groups[*].name > /jffs/softcenter/merlinclash/proxygroups_tmp.txt
+		echo_date "创建节点指定相关文件" >> $LOG_FILE
+		cp -rf $yamlpath /jffs/softcenter/merlinclash/list.yaml
+		list=/jffs/softcenter/merlinclash/list.yaml
+		yq r $list proxy-groups[*].name > /jffs/softcenter/merlinclash/proxygroups_tmp.txt
 		#加上行号
 		awk '$0=NR"."$0' /jffs/softcenter/merlinclash/proxygroups_tmp.txt > /jffs/softcenter/merlinclash/proxygroups.txt
 		#20200706读取当前配置proxies保存
-		yq r $yamlpath proxies[*].name > /jffs/softcenter/merlinclash/proxies.txt
+		yq r $list proxies[*].name > /jffs/softcenter/merlinclash/proxies.txt
 		#往头部插入两个连接方式
 		sed -i "1i\REJECT" /jffs/softcenter/merlinclash/proxies.txt
 		sed -i "1i\DIRECT" /jffs/softcenter/merlinclash/proxies.txt
+		rm -rf $list
 		[ ! -L "/tmp/proxies.txt" ] && ln -s /jffs/softcenter/merlinclash/proxies.txt /tmp/proxies.txt
 		[ ! -L "/tmp/proxygroups.txt" ] && ln -s /jffs/softcenter/merlinclash/proxygroups.txt /tmp/proxygroups.txt
 		[ ! -L "/tmp/yamls.txt" ] && ln -s /jffs/softcenter/merlinclash/yaml_bak/yamls.txt /tmp/yamls.txt
@@ -485,96 +526,12 @@ check_yaml(){
 		echo_date "检查到Clash配置文件存在！选中的配置文件是【$yamlname】" >> $LOG_FILE
 		#echo_date "将标准头部文件复制一份到/tmp/" >>"$LOG_FILE"
 		#cp -rf /jffs/softcenter/merlinclash/yaml/head.yaml /tmp/head.yaml >/dev/null 2>&1 &
-		sleep 2s
-		#去注释
-		echo_date "文件格式标准化" >>"$LOG_FILE"
-		#sed -i 's/#.*//' $yamlpath
-		#将所有DNS都转化成dns
-		sed -i 's/DNS/dns/g' $yamlpath
-		#老标题更新成新标题
-		#当文件存在Proxy:开头的行数，将Proxy: ~替换成proxies: ~并删除
-		para1=$(sed -n '/^Proxy:/p' $yamlpath)
-		if [ -n "$para1" ] ; then
-			echo_date "将Proxy:替换成proxies:" >> $LOG_FILE
-			sed -i 's/Proxy:/proxies:/g' $yamlpath
-		fi
-		sed -i 's/proxies: ~//g' $yamlpath
-
-		para2=$(sed -n '/^Proxy Group:/p' $yamlpath)
-		#当文件存在Proxy Group:开头的行数，将Proxy Group: ~替换成proxy-groups: ~并删除
-		if [ -n "$para2" ] ; then
-			echo_date "将Proxy Group:替换成proxy-groups:" >> $LOG_FILE
-			sed -i 's/Proxy Group:/proxy-groups:/g' $yamlpath
-		fi
-		sed -i 's/proxy-groups: ~//g' $yamlpath
-
-		para3=$(sed -n '/^Rule:/p' $yamlpath)
-		#当文件存在Rule:开头的行数，将Rule: ~替换成rules: ~并删除
-		if [ -n "$para3" ] ; then
-			echo_date "将Rule:替换成rules:" >> $LOG_FILE
-			sed -i 's/Rule:/rules:/g' $yamlpath
-		fi
-		sed -i 's/rules: ~//g' $yamlpath
-		#去空白行
-		sed -i '/^ *$/d' $yamlpath
-		#删除文件自带的port、socks-port、redir-port、allow-lan、mode、log-level、external-controller、experimental段
-		echo_date "删除配置文件头并与标准文件头拼接" >> $LOG_FILE 
-		yq d  -i $yamlpath port
-		#yq d  -i $yamlpath mixed-port
-		yq d  -i $yamlpath socks-port
-		yq d  -i $yamlpath redir-port
-		yq d  -i $yamlpath allow-lan
-		yq d  -i $yamlpath mode
-		yq d  -i $yamlpath log-level
-		yq d  -i $yamlpath external-controller
-		yq d  -i $yamlpath experimental
-
-		#至此，.yaml将是从dns:开始，头部在后，减少合并时间接下来进行合并
-		#yq m -x -i $yamlpath $head_tmp
-		cat $head_tmp >> $yamlpath
-		echo_date "标准头文件合并完毕" >> $LOG_FILE
-		#对external-controller赋值
-		yq w -i $yamlpath external-controller $lan_ipaddr:9990
-		#写入hosts
-		yq w -i $yamlpath 'hosts.[router.asus.com]' "$lan_ipaddr"
-		# 确保启用 DNS
- 		yq w -i $yamlpath dns.enable "true"
-		#sed -i 's/enable: '$de'/enable: true /g' /jffs/softcenter/merlinclash/上传文件名.yaml
-		# 修改dns监听端口为23453
-    		yq w -i $yamlpath dns.listen "0.0.0.0:23453"
-		#sed -i 's/listen: '$dl'/listen: 0.0.0.0:23453 /g' /jffs/softcenter/merlinclash/上传文件名.yaml
-		#echo_date "判断是否存在 port字段、socks-port、redir-port、allow-lan等"
-		yq r $yamlpath port 1>/dev/null 2>/tmp/clash_error.log
-		error=$(sed -n 1p /tmp/clash_error.log | awk -F':' '{print $1}')
-		if [ "$error" == "Error" ]; then
-			echo_date "yq 发生异常，yaml文件可能存在格式问题，即将退出！" >> $LOG_FILE
-			echo_date "以下是错误原因：" >> $LOG_FILE
-			b=$(cat /tmp/clash_error.log)
-			echo_date $b >> $LOG_FILE
-			echo_date "...MerlinClash！退出中..." >> $LOG_FILE
-			close_in_five
-		fi
-		if [ "$(yq r $yamlpath port)" != "" ] && [ "$(yq r $yamlpath socks-port)" != "" ] && [ "$(yq r $yamlpath redir-port)" != "" ] && [ "$(yq r $yamlpath allow-lan)" != "" ] && [ "$(yq r $yamlpath mode)" != "" ] && [ "$(yq r $yamlpath log-level)" != "" ] && [ "$(yq r $yamlpath external-controller)" != "" ] ; then
-
-			echo_date "Clash 文件头正常！" >> $LOG_FILE
-		else
-			echo_date "Clash文件头必要字段缺失，请检查port、socks-port、redir-port、allow-lan、" >> $LOG_FILE
-			echo_date "mode、log-level、external-controller等字段是否有值" >> $LOG_FILE
-			#dbus set $merlinclash_dnsplan="de"
-			echo_date "...MerlinClash！退出中..." >> $LOG_FILE
-			close_in_five
-		fi
-		#echo_date "判断是否存在 DNS 字段、DNS 是否启用、DNS 是否使用 redir-host / fake-ip 模式"
-		if [ "$(yq r $yamlpath dns.enable)" == "true" ] && ([[ "$dem" == "fake-ip" || "$dem" == "redir-host" ]]); then
-
-			echo_date "Clash 配置文件DNS可用！"
-		else
-			echo_date "在 Clash 配置文件中没有找到 DNS 配置！后续操作将为你配置dns继续启动"
-			
-		fi
+		#sleep 1s
+		#不再重复处理 20200721+++++++++++++++++++++++++++++++++++
+		#不再重复处理 20200721--------------------------------
 	else
-		echo_date "没有找到上传的配置文件！请先上传您的配置文件！"
-		echo_date "...MerlinClash！退出中..."
+		echo_date "文件丢失，没有找到上传的配置文件！请先上传您的配置文件！" >> $LOG_FILE
+		echo_date "...MerlinClash！退出中..." >> $LOG_FILE
 		close_in_five
 	fi
 }
@@ -608,42 +565,30 @@ get_lan_cidr() {
 
 check_dnsplan(){
 	echo_date "当前dns方案是$merlinclash_dnsplan"
+	#插入换行符免得出错
+	sed -i '$a' $yamlpath
 	case $merlinclash_dnsplan in
-de)
-	#默认方案
-	echo_date "采用配置文件的默认DNS方案";
-	# 确保启用 DNS
-    yq w -i $yamlpath dns.enable "true"
-	# 修改dns监听端口为23453
-    yq w -i $yamlpath dns.listen "0.0.0.0:23453"
-	;;
 rh)
-	#redir-host方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 redirhost.yaml 合并
-	echo_date "采用Redir-Host的DNS方案";
-	#先删除原有dns内容，再合并
-	echo_date "删除Clash配置文件中原有的DNS配置"
-    yq d -i $yamlpath dns
-	echo_date "将Redir-Host设置覆盖Clash配置文件..."
-	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/redirhost.yaml
+	#默认方案
+	echo_date "采用配置文件的默认DNS方案Redir-Host" >> $LOG_FILE
 	cat /jffs/softcenter/merlinclash/yaml/redirhost.yaml >> $yamlpath
 	;;
+#rh)
+#	#redir-host方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 redirhost.yaml 合并
+#	echo_date "采用Redir-Host的DNS方案" >> $LOG_FILE
+
+#	cat /jffs/softcenter/merlinclash/yaml/redirhost.yaml >> $yamlpath
+#	;;
 rhp)
 	#redir-host-plus方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 rhplus.yaml 合并
-	echo_date "采用Redir-Host-Plus的DNS方案";
-	#先删除原有dns内容，再合并
-	echo_date "删除Clash配置文件中原有的DNS配置"
-    yq d -i $yamlpath dns
-	echo_date "将Redir-Host-Plus设置覆盖Clash配置文件..."
-	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/rhplus.yaml
+	echo_date "采用Redir-Host-Plus的DNS方案" >> $LOG_FILE
+
 	cat /jffs/softcenter/merlinclash/yaml/rhplus.yaml >> $yamlpath
 	;;
 fi)
 	#fake-ip方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 fakeip.yaml 合并
-	echo_date "采用Fake-ip的DNS方案";
-	echo_date "删除Clash配置文件中原有的 DNS 配置"
-    yq d -i $yamlpath dns
-	echo_date "将Fake-ip设置覆盖Clash配置文件..."
-	#yq m -x -i $yamlpath /jffs/softcenter/merlinclash/yaml/fakeip.yaml
+	echo_date "采用Fake-ip的DNS方案" >> $LOG_FILE 
+
 	cat /jffs/softcenter/merlinclash/yaml/fakeip.yaml >> $yamlpath
 	;;
 esac
@@ -651,10 +596,19 @@ esac
 	#20200623
 	if [ "$merlinclash_enable" == "1" ] && [ "$merlinclash_ipv6switch" == "1" ];then
 		echo_date "检测到开启ipv6，将为你设置dns.ipv6为true" >> $LOG_FILE
-		yq w -i $yamlpath dns.ipv6 "true"
+		
+		#查找行数
+		ipv6_line=$(cat $yamlpath | grep -n "ipv6:" | awk -F ":" '{print $1}')
+		#删除行，再重写
+		sed -i "$ipv6_line d" $yamlpath
+		sed "$ipv6_line a \ \ ipv6: true" -i $yamlpath
 	else
 		echo_date "关闭clash或未开启ipv6，将为你设置dns.ipv6为false" >> $LOG_FILE
-		yq w -i $yamlpath dns.ipv6 "false"
+		
+		ipv6_line=$(cat $yamlpath | grep -n "ipv6:" | awk -F ":" '{print $1}')
+		#删除行，再重写
+		sed -i "$ipv6_line d" $yamlpath
+		sed "$ipv6_line a \ \ ipv6: false" -i $yamlpath
 	fi
 
 }
@@ -798,7 +752,6 @@ apply_mc() {
 	# router is on boot
 	WAN_ACTION=`ps|grep /jffs/scripts/wan-start|grep -v grep`
 	mkdir -p /var/wwwext
-	echo_date 触发脚本apply_mc >> $LOG_FILE
 	# now stop first
 	echo_date ======================= MERLIN CLASH ======================== >> $LOG_FILE
 	echo_date --------------------- 检查是否存冲突插件 ----------------------- >> $LOG_FILE
@@ -812,21 +765,27 @@ apply_mc() {
 	check_yaml
 	echo_date ------------------------ 确认DNS方案 -------------------------- >> $LOG_FILE
 	check_dnsplan
-	echo_date -------------------- 检查自定义规则 -------------------------- >> $LOG_FILE
+	echo_date -------------------- 自定义规则检查区 开始-------------------------- >> $LOG_FILE
 	check_rule
+	echo_date -------------------- 自定义规则检查区 结束-------------------------- >> $LOG_FILE
+	echo_date ------------------------ 节点记忆检查区 开始---------------------- >> $LOG_FILE 
+	start_bind
+	echo_date ------------------------ 节点记忆检查区 结束---------------------- >> $LOG_FILE
 	# 清除iptables规则和ipset...
 	echo_date --------------------- 清除iptables规则 ------------------------ >> $LOG_FILE
 	flush_nat
-	echo_date --------------------- 网易云功能检查 ------------------------ >> $LOG_FILE
+	echo_date --------------------- 网易云功能检查区 开始------------------------ >> $LOG_FILE
 	check_unblockneteasemusic
-	echo_date ------------------------ 应用节点记忆-------------------------- >> $LOG_FILE 
+	echo_date --------------------- 网易云功能检查区 结束------------------------ >> $LOG_FILE
 	start_bind
 	echo_date ---------------------- 启动插件相关功能 ------------------------ >> $LOG_FILE
 	start_clash && echo_date "start_clash" >> $LOG_FILE
 	watchdog
 	load_nat
 	#----------------------------------KCP进程--------------------------------
+	echo_date ---------------------- KCP设置检查区 开始 ------------------------ >> $LOG_FILE
 	start_kcp
+	echo_date ---------------------- KCP设置检查区 结束 ------------------------ >> $LOG_FILE
 	#----------------------------------应用节点记忆----------------------------
 	restart_dnsmasq
 	auto_start

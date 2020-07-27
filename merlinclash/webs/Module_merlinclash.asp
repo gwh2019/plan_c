@@ -338,9 +338,17 @@ function tabSelect(w) {
 	$('#tablet_' + w).show();
 }
 function dingyue() {
-tabSelect(1);
-$('#apply_button').hide(); 	
-$('#delallpgnodes_button').hide();
+	tabSelect(1);
+	$('#apply_button').hide(); 	
+	$('#delallpgnodes_button').hide();
+}
+function dnsplan() {
+	if(db_merlinclash["merlinclash_updata_date"]){
+		E("geoip_updata_date").innerHTML = "<span style='color: gold'>上次更新时间："+db_merlinclash["merlinclash_updata_date"]+"</span>";
+	}		
+	tabSelect(4);
+	$('#apply_button').hide(); 
+	$('#delallpgnodes_button').hide();		
 }
 function toggle_func() {
 	//$("#merlinclash_enable").click(
@@ -366,6 +374,14 @@ function toggle_func() {
 			$('#delallpgnodes_button').hide();
 			//refresh_acl_table();
 		});
+	$(".show-btn9").click(
+		function() {
+			tabSelect(9);
+			$('#apply_button').show();
+			$('#delallpgnodes_button').hide();
+			refresh_device_table();
+			//refresh_acl_table();
+		});
 	$(".show-btn3").click(
 		function() {
 			tabSelect(3);
@@ -377,19 +393,13 @@ function toggle_func() {
 			if(db_merlinclash["merlinclash_updata_date"]){
 				E("geoip_updata_date").innerHTML = "<span style='color: gold'>上次更新时间："+db_merlinclash["merlinclash_updata_date"]+"</span>";
 			}
-			//if(db_merlinclash["merlinclash_update_clashdate"]){
-			//	E("clash_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_clashdate"]+"</span>";
-			//}
-			//if(db_merlinclash["merlinclash_update_proxygroupdate"]){
-			//	E("proxygroup_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_proxygroupdate"]+"</span>";
-			//}
 			tabSelect(4);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
 		});
 	$(".show-btn5").click(
 		function() {
-			get_log();
+			//get_log();
 			tabSelect(5);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
@@ -448,6 +458,7 @@ function get_clash_status_front() {
 				E("merlinclash_unblockmusic_version").innerHTML = arr[8];
 				E("merlinclash_unblockmusic_status").innerHTML = arr[9];
 				E("proxygroup_version").innerHTML = arr[10];
+				E("proxygame_version").innerHTML = arr[11];
 			}
 		}
 	});
@@ -490,6 +501,7 @@ function get_online_yaml2(action) {
 		}
 		dbus_post["merlinclash_links2"] = db_merlinclash["merlinclash_links2"] = (E("merlinclash_links2").value);
 		dbus_post["merlinclash_uploadrename2"] = db_merlinclash["merlinclash_uploadrename2"] = (E("merlinclash_uploadrename2").value);
+		dbus_post["merlinclash_localrulesel"] = db_merlinclash["merlinclash_localrulesel"] = (E("merlinclash_localrulesel").value);
 		dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
 		push_data("clash_online_yaml2.sh", "restart",  dbus_post);
 		
@@ -1013,8 +1025,29 @@ function proxygroup_update(action) {
 			$("#log_content3").attr("rows", "20");
 			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
 			//dbus_post["merlinclash_update_proxygroupdate"] = db_merlinclash["merlinclash_update_proxygroupdate"] = currentdate;
-			
 			push_data("clash_update_proxygroup.sh", "start", dbus_post);
+			
+			//E("proxygroup_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_proxygroupdate"]+"</span>";
+			layer.close(index);
+			return true;
+			
+		}, function(index) {
+			layer.close(index);
+			return false;
+		});
+	});
+}
+			
+function proxygame_update(action) {
+	var dbus_post = {};
+	require(['/res/layer/layer.js'], function(layer) {
+		layer.confirm('<li>你确定要更新内置游戏规则文件吗？</li>', {
+			shade: 0.8,
+		}, function(index) {
+			$("#log_content3").attr("rows", "20");
+			dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
+			//dbus_post["merlinclash_update_proxygroupdate"] = db_merlinclash["merlinclash_update_proxygroupdate"] = currentdate;
+			push_data("clash_update_proxygroup.sh", "restart", dbus_post);
 			
 			//E("proxygroup_update_date").innerHTML = "<span style='color: gold'>&nbsp;&nbsp;上次更新时间："+db_merlinclash["merlinclash_update_proxygroupdate"]+"</span>";
 			layer.close(index);
@@ -1394,6 +1427,187 @@ function getACLConfigs() {
 		}
 	}
 	return acl_confs;
+}
+function refresh_device_table(q) {
+$.ajax({
+	type: "GET",
+	url: "dbconf?p=merlinclash_device",
+	dataType: "script",
+	async: false,
+	success: function(data) {
+		db_device = db_merlinclash_device;
+		refresh_device_html();
+			
+		//write dynamic table value
+		for (var i = 1; i < acl_node_max + 1; i++) {
+			$('#merlinclash_device_ip_' + i).val(db_acl["merlinclash_device_ip_" + i]);
+			$('#merlinclash_device_name_' + i).val(db_acl["merlinclash_device_name_" + i]);	
+		}
+		//after table generated and value filled, set default value for first line_image1
+		//$('#merlinclash_device_ip_').val("SRC-IP-CIDR");
+	}
+});
+}
+function adddeviceTr() {
+var devices = {};
+var p = "merlinclash_device";
+devices_node_max += 1;
+var params = ["ip", "name"];
+for (var i = 0; i < params.length; i++) {
+	devices[p + "_" + params[i] + "_" + devices_node_max] = $('#' + p + "_" + params[i]).val();
+}
+//var id = parseInt(Math.random() * 100000000);
+//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": devices};
+	devices["action_script"] = "dummy_script.sh";
+	devices["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_device",
+		data: $.param(devices),
+		dataType: "text",
+	error: function(xhr) {
+		console.log("error in posting config of table");
+	},
+	success: function(response) {
+		refresh_device_table();
+		E("merlinclash_device_ip").value = ""
+		E("merlinclash_device_name").value = ""
+	}
+});
+deviceid = 0;
+}
+function deldeviceTr(o) {
+	var id = $(o).attr("id");
+	var ids = id.split("_");
+	var p = "merlinclash_device";
+	id = ids[ids.length - 1];
+	var devices = {};
+	var params = ["ip", "name"];
+	for (var i = 0; i < params.length; i++) {
+		db_merlinclash[p + "_" + params[i] + "_" + id] = devices[p + "_" + params[i] + "_" + id] = "";
+	}
+	//var id = parseInt(Math.random() * 100000000);
+	//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": devices};
+	devices["action_script"] = "dummy_script.sh";
+	devices["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_device",
+		data: $.param(devices),
+		dataType: "text",
+		success: function(response) {			
+			refresh_device_table();
+			//refreshpage();
+		}
+	});
+}
+function refresh_device_html() {
+	device_confs = getDEVICEConfigs();
+	var n = 0;
+	for (var i in device_confs) {
+		n++;
+	}
+	var code = '';
+	// acl table th
+	code += '<table width="750px" border="0" align="center" cellpadding="4" cellspacing="0" class="FormTable_table device_lists" style="margin:-1px 0px 0px 0px;">'
+	code += '<tr>'
+	code += '<th width="25%" style="text-align: center; vertical-align: middle;"><a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(2)">主机IP地址</a></th>'
+	code += '<th width="25%" style="text-align: center; vertical-align: middle;"><a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(3)">主机别名</a></th>'
+	code += '<th width="25%">操作</th>'
+	code += '</tr>'
+	code += '</table>'
+	// acl table input area
+	code += '<table id="DEVICE_table" width="750px" border="0" align="center" cellpadding="4" cellspacing="0" class="list_table device_lists" style="margin:-1px 0px 0px 0px;">'
+		code += '<tr>'
+	//主机IP地址 
+			code += '<td width="25%">'
+			code += '<input type="text" maxlength="15" class="input_ss_table" id="merlinclash_device_ip" align="left" style="float:center;width:208px;text-align:center" autocomplete="off" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">'
+			code += '<img id="pull_arrow" height="14px;" src="images/arrow-down.gif" style="float:right;" align="right" onclick="pullLANIPList(this);" title="<#select_IP#>">'
+			code += '<div id="ClientList_Block" class="clientlist_dropdown" style="margin-left:2px;margin-top:25px;"></div>'
+			code += '</td>'
+	//主机别名
+			code += '<td width="25%">'
+			code += '<input type="text" id="merlinclash_device_name" class="input_ss_table" align="center" maxlength="50" style="width:140px;text-align:center" placeholder="" />'
+			code += '</td>'
+	// add/delete 按钮
+			code += '<td width="25%">'
+			code += '<input style="margin-left: 6px;margin: -2px 0px -4px -2px;" type="button" class="add_btn" onclick="adddeviceTr()" value="" />'
+			code += '</td>'
+		code += '</tr>'
+	// 
+	for (var field in device_confs) {
+		var dc = device_confs[field];		
+		code += '<tr id="device_tr_' + dc["device_node"] + '">';
+			code += '<td width="25%" id="merlinclash_device_ip_' +dc["device_node"] + '">' + dc["ip"] + '</td>';
+			code += '<td width="25%" id="merlinclash_device_name_' +dc["device_node"] + '">' + dc["name"] + '</td>';
+			code += '<td width="25%">';
+				code += '<input style="margin: -2px 0px -4px -2px;" id="acl_node_' + dc["device_node"] + '" class="remove_btn" type="button" onclick="deldeviceTr(this);" value="">'
+			code += '</td>';
+		code += '</tr>';
+	}
+	code += '</table>';
+
+	$(".device_lists").remove();
+	$('#merlinclash_device_table').after(code);
+
+	showDropdownClientList('setClientIP', 'ip', 'all', 'ClientList_Block', 'pull_arrow', 'online');
+}
+function setClientIP(ip, name, mac) {
+	E("merlinclash_device_ip").value = ip;
+	E("merlinclash_device_name").value = name;
+	hideClients_Block();
+}
+function pullLANIPList(obj) {
+	var element = E('ClientList_Block');
+	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
+	if (isMenuopen == 0) {
+		obj.src = "/images/arrow-top.gif"
+		element.style.display = 'block';
+	} else{
+		hideClients_Block();
+	}
+}
+function hideClients_Block() {
+	E("pull_arrow").src = "/images/arrow-down.gif";
+	E('ClientList_Block').style.display = 'none';
+}
+function getDEVICEConfigs() {
+	var dict = {};
+	devices_node_max = 0;
+	for (var field in db_device) {
+		names = field.split("_");
+		
+		dict[names[names.length - 1]] = 'ok';
+	}
+	device_confs = {};
+	var p = "merlinclash_device";
+	var params = ["ip", "name"];
+	for (var field in dict) {
+		var obj = {};
+		//if (typeof db_acl[p + "_name_" + field] == "undefined") {
+		//	obj["name"] = db_acl[p + "_ip_" + field];
+		//} else {
+		//	obj["name"] = db_acl[p + "_name_" + field];
+		//}
+		for (var i = 0; i < params.length; i++) {
+			var ofield = p + "_" + params[i] + "_" + field;
+			if (typeof db_device[ofield] == "undefined") {
+				obj = null;
+				break;
+			}
+			obj[params[i]] = db_device[ofield];
+			
+		}
+		if (obj != null) {
+			var node_a = parseInt(field);
+			if (node_a > devices_node_max) {
+				devices_node_max = node_a;
+			}
+			obj["device_node"] = field;
+			device_confs[field] = obj;
+		}
+	}
+	return device_confs;
 }
 function refresh_kcp_table(q) {
 	$.ajax({
@@ -2043,10 +2257,10 @@ function menu_hook(title, tab) {
 										<div class="SimpleNote" id="head_illustrate"><i></i>
 											<p><a href="https://github.com/Dreamacro/clash" target="_blank"><em><u>Clash</u></em></a>是一个基于规则的代理程序，本插件使用<a href="https://github.com/BROBIRD/clash/releases" target="_blank"><em><u>BROBIRD</u></em></a>编译的ClashR内核，支持<a href="https://github.com/shadowsocks/shadowsocks-libev" target="_blank"><em><u>SS</u></em></a>、<a href="https://github.com/shadowsocksrr/shadowsocksr-libev" target="_blank"><em><u>SSR</u></em></a>、<a href="https://github.com/v2ray/v2ray-core" target="_blank"><em><u>V2Ray</u></em></a>、<a href="https://github.com/trojan-gfw/trojan" target="_blank"><em><u>Trojan</u></em></a>等方式科学上网。</p>
 											<p style="color:#FC0">注意：1.Clash需要专用订阅或配置文件才可以使用，如果您的机场没提供订阅，可以使用插件内置的2种【<a style="cursor:pointer" onclick="dingyue()" href="javascript:void(0);"><em><u>规则转换</u></em></a>】，</p>
-											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;或者使用【<a href="https://acl4ssr.netlify.app/" target="_blank"><em><u>ACL4SSR 在线订阅转换</u></em></a>】。
-											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.本插件不能与【<a href="./Module_shadowsocks.asp" target="_blank"><em><u>科学上网</u></em></a>】同时运行。开启后如果Aria2/AiCloud无法外网访问，请设置<a href="./Advanced_VirtualServer_Content.asp" target="_blank"><em><u>端口转发</u></em></a>。</p>
-											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.使用延迟最低(Url-Test)&nbsp;|&nbsp;故障切换(Fallback)&nbsp;|&nbsp;负载均衡(Load-Balance)等自动策略组前，请确认您的机场允许频繁TCPing，</p>
-											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;否则您的帐号可能会被限制。</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;或者使用【<a href="https://acl4ssr.netlify.app/" target="_blank"><em><u>ACL4SSR 在线订阅转换</u></em></a>】。
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.本插件不能与【<a href="./Module_shadowsocks.asp" target="_blank"><em><u>科学上网</u></em></a>】同时运行。开启后如果Aria2/AiCloud无法外网访问，请设置<a href="./Advanced_VirtualServer_Content.asp" target="_blank"><em><u>端口转发</u></em></a>。</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.使用延迟最低(Url-Test)&nbsp;|&nbsp;故障切换(Fallback)&nbsp;|&nbsp;负载均衡(Load-Balance)等自动策略组前，请确认您的机场允许频繁TCPing，</p>
+											<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;否则您的帐号可能会被限制。</p>
 										</div>
 										<!-- this is the popup area for process status -->
 										<div id="detail_status"  class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: -20px;display: none;">
@@ -2086,7 +2300,7 @@ function menu_hook(title, tab) {
 																<i>当前版本：</i>
 															</a>
 														</div>
-														<div style="display:table-cell;float: left;margin-left:200px;position: absolute;padding: 5.5px 0px;">
+														<div style="display:table-cell;float: left;margin-left:250px;position: absolute;padding: 5.5px 0px;">
 															<a type="button" class="ss_btn" style="cursor:pointer" onclick="get_proc_status()" href="javascript:void(0);">详细状态</a>
 														</div>
 													</td>
@@ -2101,6 +2315,7 @@ function menu_hook(title, tab) {
 														<input id="show_btn1" class="show-btn1" width="11%" style="cursor:pointer" type="button" value="配置文件" />
 														<input id="show_btn7" class="show-btn7" width="11%" style="cursor:pointer" type="button" value="节点指定" />
 														<input id="show_btn2" class="show-btn2" width="11%" style="cursor:pointer" type="button" value="自定规则" />
+														<input id="show_btn9" class="show-btn9" width="11%" style="cursor:pointer" type="button" value="设备绕行" />
 														<input id="show_btn3" class="show-btn3" width="11%" style="cursor:pointer" type="button" value="高级模式" />
                                                         <input id="show_btn8" class="show-btn8" width="11%" style="cursor:pointer" type="button" value="云村解锁" />
 														<input id="show_btn4" class="show-btn4" width="11%" style="cursor:pointer" type="button" value="附加功能" />
@@ -2190,17 +2405,17 @@ function menu_hook(title, tab) {
 															<th><a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(1)">DNS方案</a></th>
 																<td colspan="2">
 																	<label for="merlinclash_dnsplan">
-																		<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="de" checked="checked">默认:按上传配置文件DNS方案
-																		<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="rh">Redir-Host
+																		<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="rh" checked="checked">默认:Redir-Host
+																		<!--<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="rh">Redir-Host-->
 																		<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="rhp">Redir-Host+
 																		<input id="merlinclash_dnsplan" type="radio" name="dnsplan" value="fi">Fake-ip
 																	</label>
 																	<p style="color:#FC0">&nbsp;</p>
-																	<p style="color:#FC0">&nbsp;注意：1.如果您没有足够的自信，请不要使用默认DNS方案。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.Reidr-Host，国内解析优先，但DNS可能被污染。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.Reidr-Host+，解析速度可能较慢，DNS基本无污染。</p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.Fake-ip，拒绝DNS污染，无法通过ping获得真实IP。<a href="https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank"><em><u>相关说明</u></em></a></p>
-																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Fake-ip模式暂不兼容KoolProxy，切忌在此模式下升级路由固件)。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.默认为Reidr-Host，国内解析优先，但DNS可能被污染。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.Reidr-Host+，代理路由自身DNS请求，确保DNS无污染。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.Fake-ip，拒绝DNS污染，无法通过ping获得真实IP。<a href="https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank"><em><u>相关说明</u></em></a></p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.各模式DNS可通过附加功能的【<a style="cursor:pointer" onclick="dnsplan()" href="javascript:void(0);"><em><u>内置DNS方案</em></u></a>】自行设置。</p>
+																	<p style="color:#FC0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Fake-ip模式与KoolProxy是否兼容请自行尝试。另！切忌在此模式下升级路由固件)。</p>
 																</td>
 														</tr>
 													</table>
@@ -2291,7 +2506,7 @@ function menu_hook(title, tab) {
 														<th><br>常规订阅
 															<br>
 															<br><em style="color: gold;">SS&nbsp;|&nbsp;SSR&nbsp;|&nbsp;V2ray&nbsp;|&nbsp;Trojan订阅</em>			
-															<br><em style="color: gold;">（使用内置8k+规则，杜绝订阅泄漏）</em>
+															<br><em style="color: gold;">（使用内置常规/游戏规则，杜绝订阅泄漏）</em>
 															<br><em style="color: red;">节点数过百后可能处理速度缓慢</em>
 														</th>
 														<td >
@@ -2301,7 +2516,11 @@ function menu_hook(title, tab) {
 																</label>
 															</div>
 															<div class="SimpleNote" style="display:table-cell;float: left; height: 110px; line-height: 110px; margin:-40px 0;">
-																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="8" style="color: #FFFFFF; width: 300px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持8位数字/字母">
+																<select id="merlinclash_localrulesel" style="width:140px;margin:0px 0px 0px 2px;text-align:left;padding-left: 0px;" class="input_option">
+																	<option value="常规规则">常规规则</option>
+																	<option value="游戏规则">游戏规则</option>																																						
+																</select>
+																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="5" style="color: #FFFFFF; width: 150px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持5位数字/字母">
 																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
 															</div>
 														</td>
@@ -2401,6 +2620,17 @@ function menu_hook(title, tab) {
 											<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;禁止某端口联网：类型：<em>DST-PORT</em>，内容：<em>7777</em>（端口号），连接方式：<em>REJECT</em>（大写）</i></div>
 											<div><i>&nbsp;&nbsp;5.更多说明请点击表头查看，或者参阅Clash的【<a href="https://lancellc.gitbook.io/clash/clash-config-file/rules" target="_blank"><em><u>开发文档</u></em></a>】。</i></div>
 											<div><i>&nbsp;</i></div>
+											</div>
+										</div>
+										<!--设备绕行-->
+										<div id="tablet_9" style="display: none;">		
+											<div id="merlinclash_device_table">
+											</div>												
+											<div id="DEVICE_note" style="margin:10px 0 0 5px">
+											<div><i>&nbsp;&nbsp;1.本功能通过iptables实现设备绕行，优先级高于Clash访问控制规则；<br>
+											&nbsp;&nbsp;2.如果某些设备开启Clash无法正常联网，可尝试使用此功能；<br>
+											&nbsp;&nbsp;3.请在【<a href="./Advanced_DHCP_Content.asp" target="_blank"><em><u>DHCP服务器</u></em></a>】中绑定您需要绕行的设备IP，否则可能会因设备IP改变导致规则失效。<br></i></div>
+											<div><i>&nbsp;</i></div>
 										</div>
 										</div>
 										<!--高级模式-->
@@ -2439,7 +2669,7 @@ function menu_hook(title, tab) {
 														</tr>
 														</thead>
 													<tr id="dns_plan">
-														<th>UDP转发(实验性功能)&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(9)"><em style="color: gold;">【试用必看】</em></a></th>
+														<th>UDP转发(实验性功能)&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(9)"><em style="color: gold;">【开启必看】</em></a></th>
 															<td colspan="2">
 																<div class="switch_field" style="display:table-cell;float: left;">
 																<label for="merlinclash_udpr">
@@ -2560,7 +2790,7 @@ function menu_hook(title, tab) {
 														</tr>
 														<tr id="cert_download_tr">
 															<th>
-																<label >证书下载</label>&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(8)"><em style="color: gold;">【IOS说明】</em></a>																
+																<label >证书下载</label>&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openmcHint(8)"><em style="color: gold;">【安装说明】</em></a>																
 															</th>
 															<td>
 																<input  type="button" id="merlinclash_unblockmusic_download_cert" class="button_gen" onclick="downloadcert();" value="下载证书" />
@@ -2604,7 +2834,7 @@ function menu_hook(title, tab) {
 																</label>
 															</div>
 															<div class="SimpleNote" id="head_illustrate">
-																<p>MerlinClash 实现的 Clash 进程守护工具，每 60 秒检查一次 Clash 进程是否存在，如果 Clash 进程丢失则会自动重新拉起。</p>
+																<p>进程守护工具，每 60 秒检查一次 Clash 进程是否存在，如果 Clash 进程丢失则会自动重新拉起。</p>
 																<p style="color:gold; margin-top: 8px">注意：Clash本身运行稳定，通常不必开启该功能~且由于Clash不支持保存节点选择状态，进程重新启后策略组配置会恢复初始状态！</p>
 															</div>
 														</td>
@@ -2661,11 +2891,21 @@ function menu_hook(title, tab) {
 															</td>		
 													</tr>
 													<tr>
-														<th>内置规则文件更新</th>
+														<th>内置【常规规则】更新</th>
 															<td colspan="2">
 																<div class="SimpleNote" id="head_illustrate">																	
-																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="proxygroup_update(14)">更新内置规则文件</a>
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="proxygroup_update(14)">&nbsp;&nbsp;更新常规规则&nbsp;&nbsp;</a>
 																	<span id="proxygroup_version">&nbsp;&nbsp;当前版本：</span>
+																	<!--<span id="proxygroup_update_date">&nbsp;&nbsp;上次更新时间：</span>-->
+																</div>
+															</td>		
+													</tr>
+													<tr>
+														<th>内置【游戏规则】更新</th>
+															<td colspan="2">
+																<div class="SimpleNote" id="head_illustrate">																	
+																	<a type="button" class="ss_btn" style="cursor:pointer" onclick="proxygame_update(15)">&nbsp;&nbsp;更新游戏规则&nbsp;&nbsp;</a>
+																	<span id="proxygame_version">&nbsp;&nbsp;当前版本：</span>
 																	<!--<span id="proxygroup_update_date">&nbsp;&nbsp;上次更新时间：</span>-->
 																</div>
 															</td>		
@@ -2782,8 +3022,8 @@ function menu_hook(title, tab) {
 											</div>
 										</div>
 										<div id="tablet_6" style="display: none;">
-											<div id="yaml_content" style="margin-top:-1px;overflow:hidden;">
-												<textarea cols="63" rows="36" wrap="on" readonly="readonly" id="yaml_content1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+											<div id="yaml_content" style="margin-top:0px; width:750px; height: 650px;">
+												<textarea class="sbar" cols="63" rows="36" wrap="on" readonly="readonly" id="yaml_content1" style="margin: 0px; width: 709px; height: 645px; resize: none;"></textarea>
 											</div>
 										</div>
 										<div class="apply_gen" id="loading_icon">

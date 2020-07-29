@@ -43,12 +43,14 @@ function init() {
 	get_dbus_data();
 	yaml_select();
 	clashbinary_select();
-	refresh_pgnodes_table();
+	//refresh_pgnodes_table();
 	proxies_select();
 	proxygroup_select();
 	yaml_view();
+	node_remark_view();
 	get_log();
 	refresh_kcp_table();
+	refresh_device_table();
 	//check_unblockneteasemusic_status();	
 	if(E("merlinclash_enable").checked){
 		merlinclash.checkIP();
@@ -293,9 +295,14 @@ function apply() {
 					
 				}
 				if(yamlsel_tmp2!=yamlsel_tmp1){
-					apply_delallpgnodes();
+					//apply_delallpgnodes();
 					db_merlinclash["merlinclash_action"] = "1";
-					
+					db_merlinclash["merlinclash_yamlselchange"] = "1";
+				}
+				if(yamlsel_tmp2 == yamlsel_tmp1){
+					//apply_delallpgnodes();
+					db_merlinclash["merlinclash_action"] = "1";
+					db_merlinclash["merlinclash_yamlselchange"] = "0";
 				}
 				push_data("clash_config.sh", "start",  db_merlinclash);
 			}
@@ -341,6 +348,7 @@ function dingyue() {
 	tabSelect(1);
 	$('#apply_button').hide(); 	
 	$('#delallpgnodes_button').hide();
+	$('#delallowneracls_button').hide();
 }
 function dnsplan() {
 	if(db_merlinclash["merlinclash_updata_date"]){
@@ -349,6 +357,7 @@ function dnsplan() {
 	tabSelect(4);
 	$('#apply_button').hide(); 
 	$('#delallpgnodes_button').hide();		
+	$('#delallowneracls_button').hide();	
 }
 function toggle_func() {
 	//$("#merlinclash_enable").click(
@@ -360,18 +369,21 @@ function toggle_func() {
 			tabSelect(0);
 			$('#apply_button').show(); 
 			$('#delallpgnodes_button').hide(); 			
+			$('#delallowneracls_button').hide();		
 		});
 	$(".show-btn1").click( 
 		function() {
 			tabSelect(1);
 			$('#apply_button').hide(); 
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').hide();
 		});
 	$(".show-btn2").click(
 		function() {
 			tabSelect(2);
 			$('#apply_button').show();
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').show();
 			//refresh_acl_table();
 		});
 	$(".show-btn9").click(
@@ -379,7 +391,8 @@ function toggle_func() {
 			tabSelect(9);
 			$('#apply_button').show();
 			$('#delallpgnodes_button').hide();
-			refresh_device_table();
+			$('#delallowneracls_button').hide();
+			//refresh_device_table();
 			//refresh_acl_table();
 		});
 	$(".show-btn3").click(
@@ -387,6 +400,7 @@ function toggle_func() {
 			tabSelect(3);
 			$('#apply_button').show(); 
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').hide();
 		});
 	$(".show-btn4").click(
 		function() {
@@ -396,6 +410,7 @@ function toggle_func() {
 			tabSelect(4);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').hide();					
 		});
 	$(".show-btn5").click(
 		function() {
@@ -403,24 +418,28 @@ function toggle_func() {
 			tabSelect(5);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').hide();
 		});
 	$(".show-btn6").click(
 		function() {
 			tabSelect(6);
 			$('#apply_button').hide();
 			$('#delallpgnodes_button').hide();
+			$('#delallowneracls_button').hide();
 		});
 	$(".show-btn7").click(
 		function() {
 			tabSelect(7);
 			$('#apply_button').show();
 			$('#delallpgnodes_button').show();		
+			$('#delallowneracls_button').hide();	
 		});
         $(".show-btn8").click(
 		function() {
 			tabSelect(8);
 			$('#apply_button').show();
 			$('#delallpgnodes_button').hide(); 
+			$('#delallowneracls_button').hide();
 		});
 	//显示默认页
 	$(".show-btn0").trigger("click");
@@ -612,6 +631,43 @@ $.ajax({
 		},
 		error: function(xhr) {
 			E("yaml_content1").value = "获取配置文件信息失败！";
+		}
+	});
+}
+function node_remark_view() {
+$.ajax({
+		url: '/logreaddb.cgi?p=mark_status.txt',
+		type: 'GET',
+		dataType: 'html',
+		async: true,
+		cache:false,
+		success: function(response) {
+			var retArea = E("nodes_content1");
+			if (response.search("BBABBBBC") != -1) {
+				retArea.value = response.replace("BBABBBBC", " ");
+				var pageH = parseInt(E("FormTitle").style.height.split("px")[0]); 
+				if(pageH){
+					autoTextarea(E("nodes_content1"), 0, (pageH - 308));
+				}else{
+					autoTextarea(E("nodes_content1"), 0, 980);
+				}
+				return true;
+			}
+			if (_responseLen == response.length) {
+				noChange++;
+			} else {
+				noChange = 0;
+			}
+			if (noChange > 5) {
+				return false;
+			} else {
+				setTimeout("node_remark_view();", 300);
+			}
+			retArea.value = response;
+			_responseLen = response.length;
+		},
+		error: function(xhr) {
+			E("nodes_content1").value = "获取配置文件信息失败！";
 		}
 	});
 }
@@ -1866,7 +1922,7 @@ function addTrpgnodes() {
 	var params = ["proxygroup", "nodesel"];
 	for (var i = 0; i < params.length; i++) {
 		pgnodes[p + "_" + params[i] + "_" + pgnodes_node_max] = $('#' + p + "_" + params[i]).val();
-		
+		db_merlinclash["merlinclash_encode_" + params[0] + "_" + pgnodes_node_max] = encodeURIComponent($('#' + p + "_" + params[0]).val());
 	}
 	//var id = parseInt(Math.random() * 100000000);
 	//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": pgnodes};
@@ -1948,6 +2004,49 @@ function delTrpgnodes(o) {
 		}
 	});
 }
+function delallaclconfigs() {
+		getaclconfigsmax();
+		if(acl_node_max != "undefined"){
+			var p = "merlinclash_acl";
+			acl_node_del = acl_node_max;
+			var acls = {};
+			var params = ["type", "content", "lianjie"];
+			for (var j=acl_node_del; j>0; j--) {
+				for (var i = 0; i < params.length; i++) {
+					acls[p + "_" + params[i] + "_" + j] = "";		
+				}
+			}
+			acl_node_max = 0;
+			//var id = parseInt(Math.random() * 100000000);
+			//var postData = {"id": id, "method": "dummy_script.sh", "params":[], "fields": acls};
+	acls["action_script"] = "dummy_script.sh";
+	acls["action_mode"] = "dummy";
+	$.ajax({
+		type: "POST",
+		url: "/applydb.cgi?p=merlinclash_acl",
+		data: $.param(acls),
+		dataType: "text",
+				success: function(response) {		           
+					refresh_acl_table();
+					refreshpage();
+				}
+			});	
+		}
+			
+}
+function getaclconfigsmax(){
+	$.ajax({
+		type: "GET",
+		url: "dbconf?p=merlinclash_acl",
+		dataType: "script",
+		async: false,
+		success: function(data) {
+			db_acls = db_merlinclash_acl;
+			getACLConfigs();
+			//after table generated and value filled, set default value for first line_image1
+		}
+	});
+}
 function delallpgnodes() {
 		getpgnodesmax();
 		if(pgnodes_node_max != "undefined"){
@@ -2020,8 +2119,8 @@ function refresh_pgnodes_html() {
 	//table th
 	code2 += '<table width="750px" border="0" align="center" cellpadding="4" cellspacing="0" class="FormTable_table pgnodes_lists" style="margin:-1px 0px 0px 0px;">'
 		code2 += '<tr>'
-			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">Proxy-Group</th>'
-			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">节点</th>'
+			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">策略组</th>'
+			code2 += '<th width="40%" style="text-align: center; vertical-align: middle;">使用配置</th>'
 			code2 += '<th width="20%">操作</th>'
 		code2 += '</tr>'
 	code2 += '</table>'
@@ -2312,13 +2411,13 @@ function menu_hook(title, tab) {
 												<tr>
 													<td cellpadding="0" cellspacing="0" style="padding:0" border="1" bordercolor="#222">
 														<input id="show_btn0" class="show-btn0" width="11%" style="cursor:pointer" type="button" value="首页功能" />
-														<input id="show_btn1" class="show-btn1" width="11%" style="cursor:pointer" type="button" value="配置文件" />
-														<input id="show_btn7" class="show-btn7" width="11%" style="cursor:pointer" type="button" value="节点指定" />
+														<input id="show_btn1" class="show-btn1" width="11%" style="cursor:pointer" type="button" value="配置文件" />														
 														<input id="show_btn2" class="show-btn2" width="11%" style="cursor:pointer" type="button" value="自定规则" />
 														<input id="show_btn9" class="show-btn9" width="11%" style="cursor:pointer" type="button" value="设备绕行" />
 														<input id="show_btn3" class="show-btn3" width="11%" style="cursor:pointer" type="button" value="高级模式" />
                                                         <input id="show_btn8" class="show-btn8" width="11%" style="cursor:pointer" type="button" value="云村解锁" />
 														<input id="show_btn4" class="show-btn4" width="11%" style="cursor:pointer" type="button" value="附加功能" />
+														<input id="show_btn7" class="show-btn7" width="11%" style="cursor:pointer" type="button" value="节点日志" />
 														<input id="show_btn5" class="show-btn5" width="11%" style="cursor:pointer" type="button" value="操作日志" />
 														<input id="show_btn6" class="show-btn6" width="11%" style="cursor:pointer" type="button" value="当前配置" />
 													</td>
@@ -2506,8 +2605,7 @@ function menu_hook(title, tab) {
 														<th><br>常规订阅
 															<br>
 															<br><em style="color: gold;">SS&nbsp;|&nbsp;SSR&nbsp;|&nbsp;V2ray&nbsp;|&nbsp;Trojan订阅</em>			
-															<br><em style="color: gold;">（使用内置常规/游戏规则，杜绝订阅泄漏）</em>
-															<br><em style="color: red;">节点数过百后可能处理速度缓慢</em>
+															<br><em style="color: gold;">（使用内置常规/游戏规则，杜绝订阅泄漏）</em>															
 														</th>
 														<td >
 															<div class="SimpleNote" style="display:table-cell;float: left;">
@@ -2521,7 +2619,7 @@ function menu_hook(title, tab) {
 																	<option value="游戏规则">游戏规则</option>																																						
 																</select>
 																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename2" maxlength="5" style="color: #FFFFFF; width: 150px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持5位数字/字母">
-																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
+																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml2(17)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
 															</div>
 														</td>
 													</tr>
@@ -2551,7 +2649,7 @@ function menu_hook(title, tab) {
 																	<option value="Mini_MultiMode">Mini_MultiMode_精简版自动测速故障转移负载均衡</option>																				
 																</select>
 																<input onkeyup="value=value.replace(/[^\w\.\/]/ig,'')" id="merlinclash_uploadrename4" maxlength="5" style="color: #FFFFFF; width: 150px; height: 20px; background-color:rgba(87,109,115,0.5); font-family: Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px;margin:-30px 0;" placeholder="&nbsp;重命名,支持5位数字/字母">
-																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml3(2)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
+																<a type="button" style="vertical-align: middle; margin:-10px 10px;" class="ss_btn" style="cursor:pointer" onclick="get_online_yaml3(16)" href="javascript:void(0);">&nbsp;&nbsp;开始转换&nbsp;&nbsp;</a>
 															</div>
 														</td>
 													</tr>
@@ -2597,13 +2695,21 @@ function menu_hook(title, tab) {
 											</div>				
 										</div>
 										<!--节点指定-->
-										<div id="tablet_7" style="display: none;">
+										<!--<div id="tablet_7" style="display: none;">
 											<div id="merlinclash_pgnodes_table">
 											</div>												
 											<div id="MEMO_note" style="margin:10px 0 0 5px">
-											<div><i>&nbsp;&nbsp;1.该功能可以设定Clash初始策略组配置，仅对当前配置文件有效</i></div>
-											<div><i>&nbsp;&nbsp;2.如果您的设置不符合Clash的标准，进程会无法启动。请删除所有配置，重新尝试。</i></div>
+											<div><i>&nbsp;&nbsp;1.该功能可以指定Clash策略组默认运行节点，仅对当前配置文件有效;</i></div>
+											<div><i>&nbsp;&nbsp;2.请结合您的当前配置文件的【<em>策略组</em>】的可选项，按需设置。</i></div>
+											<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;例：通过<a href="http://yacd.haishan.me/" target="_blank"><em>控制面板</em></a>中查看得知：【<em>策略组</em>】-【<em>总模式</em>】中有【<em>延迟最低</em>】【<em>节点一</em>】【<em>DIRECT</em>】三个选项，</i></div>
+											<div><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;则在指定【<em>总模式</em>】的配置时，只能指定这三项，指定其他选项无效。</i></div>
 											<div><i>&nbsp;</i></div>
+											</div>				
+										</div>-->
+										<!--节点日志-->
+										<div id="tablet_7" style="display: none;">
+											<div id="nodes_content" style="margin-top:0px; width:750px; height: 650px;">
+												<textarea class="sbar" cols="63" rows="36" wrap="on" readonly="readonly" id="nodes_content1" style="margin: 0px; width: 709px; height: 645px; resize: none;"></textarea>
 											</div>				
 										</div>
 										<!--自定规则-->
@@ -3031,6 +3137,9 @@ function menu_hook(title, tab) {
 										</div>
 										<div id="delallpgnodes_button" class="apply_gen">
 											<input class="button_gen" type="button" onclick="delallpgnodes()" value="全部删除">	
+										</div>
+										<div id="delallowneracls_button" class="apply_gen">
+											<input class="button_gen" type="button" onclick="delallaclconfigs()" value="全部删除">	
 										</div>
 										<div id="apply_button" class="apply_gen">
 											<input class="button_gen" type="button" onclick="apply()" value="保存&应用">

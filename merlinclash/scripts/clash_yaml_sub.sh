@@ -29,12 +29,20 @@ if [ -n "$para1" ] ; then
     sed -i 's/Proxy: ~//g' $yaml_tmp
 fi
 
+para1=$(sed -n '/^Proxy: ~/p' $yaml_tmp)
+if [ -n "$para1" ] ; then
+    sed -i 's/Proxy: ~//g' $yaml_tmp
+fi
 para2=$(sed -n '/^Proxy Group: ~/p' $yaml_tmp)
 #当文件存在Proxy Group:开头的行数，将Proxy Group: ~替换成空格
 if [ -n "$para2" ] ; then
     sed -i 's/Proxy Group: ~//g' $yaml_tmp
 fi
-
+pg_line=$(grep -n "Proxy Group" $yaml_tmp | awk -F ":" '{print $1}' )
+if [ -n "$pg_line" ] ; then
+    sed -i "$pg_line d" $yaml_tmp
+    sed -i "$pg_line i proxy-groups:" $yaml_tmp
+fi
 para3=$(sed -n '/Rule: ~/p' $yaml_tmp)
 #当文件存在Rule:开头的行数，将Rule: ~替换成空格
 if [ -n "$para3" ] ; then

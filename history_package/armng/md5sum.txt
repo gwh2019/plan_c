@@ -2,3 +2,4 @@
 f01ef0d365fddf81c59090cca40d290e merlinclash_1.0.tar.gz
 37a4b7c949321e7070965e74b24b75df merlinclash_1.1.tar.gz
 9d9adb38452da21a4280fa0d33039b49 merlinclash_1.2.tar.gz
+9e66985007631e54c5df7fcccf67b2d7 merlinclash_1.3.tar.gz

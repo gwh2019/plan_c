@@ -60,17 +60,24 @@ get_ss_rule_now(){
 				password=$(eval echo \$ssconf_basic_password_${i})
 				password=$(echo $password | base64_decode)
 				v2ray_plugin=$(eval echo \$ssconf_ss_v2ray_password_${i})
-				if [ $v2ray_plugin != "0" ]; then
-					echo "fuzhi"
-				fi
+				obfs_tmp=$(eval echo \$ssconf_basic_ss_obfs_${i})
+				obfs_host=$(eval echo \$ssconf_basic_ss_obfs_host_${i})
+				#if [ $v2ray_plugin != "0" ]; then
+				#	echo "fuzhi"
+				#fi
 				#add ss节点
 				echo_date "转换ss节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].type "ss"
-				yq w -i /tmp/proxies.yaml proxies[$n].server $server
-				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
-				yq w -i /tmp/proxies.yaml proxies[$n].cipher $encrypt_method
-				yq w -i /tmp/proxies.yaml proxies[$n].password $password
+				#yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
+				#yq w -i /tmp/proxies.yaml proxies[$n].type "ss"
+				#yq w -i /tmp/proxies.yaml proxies[$n].server $server
+				#yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
+				#yq w -i /tmp/proxies.yaml proxies[$n].cipher $encrypt_method
+				#yq w -i /tmp/proxies.yaml proxies[$n].password $password
+				if [ "$obfs_tmp" == "tls" ]; then
+					sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ss, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"", plugin: "obfs", plugin-opts: {mode: "\"$obfs_tmp\"", host: "\"$obfs_host\""}, udp: true}" /tmp/proxies.yaml
+				else
+					sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ss, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"" }" /tmp/proxies.yaml
+				fi
 				let n++
 				
 			elif [ $type == "1" ]; then
@@ -92,21 +99,22 @@ get_ss_rule_now(){
 				obfs=$(eval echo \$ssconf_basic_rss_obfs_${i})
 				obfsparam=$(eval echo \$ssconf_basic_rss_obfs_param_${i})
 
-				if [ $v2ray_plugin != "0" ]; then
-					echo "fuzhi"
-				fi
+				#if [ $v2ray_plugin != "0" ]; then
+				#	echo "fuzhi"
+				#fi
 				#add ss节点
 				echo_date "转换ssr节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].type "ssr"
-				yq w -i /tmp/proxies.yaml proxies[$n].server $server
-				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
-				yq w -i /tmp/proxies.yaml proxies[$n].cipher $encrypt_method
-				yq w -i /tmp/proxies.yaml proxies[$n].password $password
-				yq w -i /tmp/proxies.yaml proxies[$n].protocol $protocol
-				yq w -i /tmp/proxies.yaml proxies[$n].protocolparam $protocolparam
-				yq w -i /tmp/proxies.yaml proxies[$n].obfs $obfs
-				yq w -i /tmp/proxies.yaml proxies[$n].obfsparam $obfsparam
+				#yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
+				#yq w -i /tmp/proxies.yaml proxies[$n].type "ssr"
+				#yq w -i /tmp/proxies.yaml proxies[$n].server $server
+				#yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
+				#yq w -i /tmp/proxies.yaml proxies[$n].cipher $encrypt_method
+				#yq w -i /tmp/proxies.yaml proxies[$n].password $password
+				#yq w -i /tmp/proxies.yaml proxies[$n].protocol $protocol
+				#yq w -i /tmp/proxies.yaml proxies[$n].protocolparam $protocolparam
+				#yq w -i /tmp/proxies.yaml proxies[$n].obfs $obfs
+				#yq w -i /tmp/proxies.yaml proxies[$n].obfsparam $obfsparam
+				sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ssr, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"", protocol: "\"$protocol\"", protocol-param: "\"$protocolparam\"",protocolparam: "\"$protocolparam\"", obfs: "\"$obfs\"", obfs-param: "\"$obfsparam\"", obfsparam: "\"$obfsparam\"" }" /tmp/proxies.yaml
 				let n++
 			#为ssr节点
 			elif [ $type == "2" ]; then
@@ -126,19 +134,22 @@ get_ss_rule_now(){
 				v2ray_id=$(eval echo \$ssconf_basic_v2ray_uuid_${i})
 				v2ray_aid=$(eval echo \$ssconf_basic_v2ray_alterid_${i})
 				cipher=$(eval echo \$ssconf_basic_v2ray_security_${i})
+				net=$(eval echo \$ssconf_basic_v2ray_network_${i})
+				network_path=$(eval echo \$ssconf_basic_v2ray_network_path_${i})
+				tls_tmp=$(eval echo \$ssconf_basic_v2ray_network_security_${i})
+				network_host=$(eval echo \$ssconf_basic_v2ray_network_host_${i})
 
-				if [ $v2ray_plugin != "0" ]; then
-					echo "fuzhi"
-				fi
+				[ "$tls_tmp"x == "tls"x ] && tls="true" || tls="false"
 				#add ss节点
 				echo_date "转换v2ray节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].type "vmess"
-				yq w -i /tmp/proxies.yaml proxies[$n].server $server
-				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
-				yq w -i /tmp/proxies.yaml proxies[$n].uuid $v2ray_id
-				yq w -i /tmp/proxies.yaml proxies[$n].cipher $cipher
-				yq w -i /tmp/proxies.yaml proxies[$n].alterId $v2ray_aid
+				#yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
+				#yq w -i /tmp/proxies.yaml proxies[$n].type "vmess"
+				#yq w -i /tmp/proxies.yaml proxies[$n].server $server
+				#yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
+				#yq w -i /tmp/proxies.yaml proxies[$n].uuid $v2ray_id
+				#yq w -i /tmp/proxies.yaml proxies[$n].cipher $cipher
+				#yq w -i /tmp/proxies.yaml proxies[$n].alterId $v2ray_aid
+				sed -i "\$i\ \ \- { name: "\"$remarks\"", type: vmess, server: "\"$server\"", port: "$server_port", uuid: "\"$v2ray_id\"", alterId: "\"$v2ray_aid\"", cipher: "\"$cipher\"", tls: "$tls", network: "\"$net\"", ws-path: "\"$network_path\"", ws-headers: {Host: "\"$network_host\""}}" /tmp/proxies.yaml
 				let n++		
 			elif [ $type == "4" ]; then
 			#为trojan节点
@@ -154,16 +165,17 @@ get_ss_rule_now(){
 				server_port=$(eval echo \$ssconf_basic_port_${i})
 				password=$(eval echo \$ssconf_basic_password_${i})
 				password=$(echo $password | base64_decode)
-				if [ $v2ray_plugin != "0" ]; then
-					echo "fuzhi"
-				fi
+				#if [ $v2ray_plugin != "0" ]; then
+				#	echo "fuzhi"
+				#fi
 				#add ss节点
 				echo_date "转换trojan节点：$n--$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
-				yq w -i /tmp/proxies.yaml proxies[$n].type "trojan"
-				yq w -i /tmp/proxies.yaml proxies[$n].server $server
-				yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
-				yq w -i /tmp/proxies.yaml proxies[$n].password $password
+				#yq w -i /tmp/proxies.yaml proxies[$n].name "$remarks"
+				#yq w -i /tmp/proxies.yaml proxies[$n].type "trojan"
+				#yq w -i /tmp/proxies.yaml proxies[$n].server $server
+				#yq w -i /tmp/proxies.yaml proxies[$n].port $server_port
+				#yq w -i /tmp/proxies.yaml proxies[$n].password $password
+				sed -i "\$i\ \ \- { name: "\"$remarks\"", type: trojan, server: "\"$server\"", port: "$server_port", password: "\"$password\"", sni: "\"$server\"" }" /tmp/proxies.yaml
 				let n++	
 			elif [ $type == "5" ]; then
 				echo_date "trojan-go节点跳过"
@@ -190,13 +202,14 @@ get_ss_rule_now(){
 
 write_yaml(){
 	echo_date "开始写入节点名称"
-	test=$(echo $(yq r /tmp/proxies.yaml proxies[*].name))
+	#test=$(echo $(yq r /tmp/proxies.yaml proxies[*].name))
+	test=$(grep  "name" /tmp/proxies.yaml | awk -F","  '{print $1}' | awk -F "[\"\"]" '{print $2}')
 	for t in $test;
 	do 
 		str=$str,"\"$t"\"
 	done
 	proxy=$(echo $str |  awk '{print substr($1,2)}')
-	sleep 2s
+	sleep 1s
 
 	sed -i "s/url-test, proxies,/url-test, proxies: [$proxy],/g" /tmp/proxy-group.yaml
 	sed -i "s/fallback, proxies,/fallback, proxies: [$proxy],/g" /tmp/proxy-group.yaml

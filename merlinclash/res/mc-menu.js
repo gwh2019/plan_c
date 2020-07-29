@@ -363,7 +363,7 @@ function LoadingMCProgress(seconds) {
 		document.getElementById("loading_block3").innerHTML = "MerlinCLash启用中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>此期间请勿访问屏蔽网址，以免污染DNS进入缓存</font></li><li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	}  else if (action == 2) {
-		document.getElementById("loading_block3").innerHTML = "MerlinCLash订阅处理中 ..."
+		document.getElementById("loading_block3").innerHTML = "CLash订阅处理中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	}	else if (action == 3) {
 		document.getElementById("loading_block3").innerHTML = "MerlinCLash上传文件处理中 ..."
@@ -401,6 +401,15 @@ function LoadingMCProgress(seconds) {
 	}	else if (action == 14) {
 		document.getElementById("loading_block3").innerHTML = "在线更新内置规则文件中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 15) {
+		document.getElementById("loading_block3").innerHTML = "上传安装补丁中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 16) {
+		document.getElementById("loading_block3").innerHTML = "Clash-ACL4SSR在线订阅中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+	}	else if (action == 17) {
+		document.getElementById("loading_block3").innerHTML = "Clash-常规订阅中 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	}
 }
 function hideMCLoadingBar() {
@@ -425,7 +434,7 @@ function openmcHint(itemNum) {
 		statusmenu = "<span><b><font color='#CC0066'>【1】SRC-IP-CIDR:</font></b></br>"
 		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;来源IP地址规则</br>"
 		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;举例：SRC-IP-CIDR,192.168.1.201/32,DIRECT </br>"
-		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;简单说明：设定局域网内某设备如果走规则（IP地址必须有掩码位）</br>"
+		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;简单说明：设定局域网内某设备如何走规则（IP地址必须有掩码位）</br>"
 		//IP-CIDR
 		statusmenu += "<span><b><font color='#CC0066'>【2】IP-CIDR:</font></b></br>"
 		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;目的IP地址</br>"
@@ -524,12 +533,13 @@ function openmcHint(itemNum) {
 		_caption = "快速重启说明";		
 	}
 	if (itemNum == 8) {
-		width = "350px";
+		width = "400px";
 		bgcolor = "#CC0066",
 		statusmenu += "如果能正常解锁，请忽略本内容。</br>"
 		statusmenu += "<span><b><font color='#CC0066'>证书安装</font></b></br>"
-		statusmenu += "点击“生成证书”后，“下载证书”后安装到您需要解锁的设备中:</br>"
-		statusmenu += "iOS13及以上设备，安装证书后，在“设置-通用-关于本机-证书信任设置” 中，信任 UnblockNeteaseMusic Root CA</br>"
+		statusmenu += "1.设置 WIFI/有线代理方式为【自动】；</br>"
+		statusmenu += "2.点击“生成证书”后，“下载证书”后安装到您需要解锁的设备中；</br>"
+		statusmenu += "3.iOS13及以上设备，安装证书后，在“设置-通用-关于本机-证书信任设置” 中，信任 UnblockNeteaseMusic Root CA</br>"
 		statusmenu += "</br>"
 		
 		_caption = "IOS使用说明";		
@@ -537,13 +547,15 @@ function openmcHint(itemNum) {
 	if (itemNum == 9) {
 		width = "350px";
 		bgcolor = "#CC0066",
-		statusmenu += "<span><b><font color='#CC0066'>【1】请确保服务器节点支持UDP转发</font></b></br>"
-		
-		statusmenu += "<span><b><font color='#CC0066'>【2】功能为实验性功能，可能存在不可预知的BUG</font></b></br>"
-		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;使用过程有上网方面的问题，请关闭该功能</br>"
-		statusmenu += "<span><b><font color='#CC0066'>【3】在此提供测试节点是否支持udp转发的方法</font></b></br>"
-		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;可在面板修改为GLOBAL模式，节点选择待测试节点</br>"
-	    statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;如果上网正常，则节点支持本功能</br>"
+		statusmenu += "<span><b><font color='#CC0066'>本功能为实验功能，如无需求，不建议开启</font></b></br>"
+		statusmenu += "1.SSR、Snell节点不支持UDP转发，开启后可能会断网；</br>"
+		statusmenu += "2.UDP转发需要您的节点支持，否则可能无法正常上网；</br>"
+		statusmenu += "3.部分游戏可能需要Fake-ip模式才能正常转发。</br>"
+		statusmenu += "</br>"
+		statusmenu += "<span><b><font color='#CC0066'>如果开启后断网，请做如下操作：</font></b></br>"
+		statusmenu += "1.尝试使用ip地址，登陆路由web管理端，关闭Clash。</br>"
+	    statusmenu += "2.如果使用ip地址依然无法登陆，请重启路由器；</br>"
+		statusmenu += "3.在路由开机过程中尝试登陆路由，并快速关闭Clash。</br>"
 		
 
 		_caption = "UDP试用必看";	

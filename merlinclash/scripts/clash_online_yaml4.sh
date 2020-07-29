@@ -72,19 +72,25 @@ start_online_update(){
 			#echo_date merlinclash_link=$merlinc_link >> $LOG_FILE
 			#wget下载文件
 			wget --no-check-certificate -t3 -T30 -4 -O /tmp/$upname "$links"
-			if [ -f /tmp/$upname ]; then		
-				echo_date "yaml文件合法性检查" >> $LOG_FILE
-				check_yamlfile
-				if [ $flag == "1" ]; then
-				#后台执行上传文件名.yaml处理工作，包括去注释，去空白行，去除dns以上头部，将标准头部文件复制一份到/tmp/ 跟tmp的标准头部文件合并，生成新的head.yaml，再将head.yaml复制到/jffs/softcenter/merlinclash/并命名为upload.yaml
-					echo_date "后台执行yaml文件处理工作" >> $LOG_FILE
-					sh /jffs/softcenter/scripts/clash_yaml_sub.sh >/dev/null 2>&1 &
+			if [ "$?" == "0" ];then
+				echo_date "检查文件完整性" >> $LOG_FILE
+				if [ -z "$(cat /tmp/$upname)" ];then 
+					echo_date "获取clash配置文件失败！" >> $LOG_FILE
+					failed_warning_clash
 				else
-					echo_date "没找到.yaml文件或.yaml文件格式不合法" >> $LOG_FILE
-					unset_lock
+					echo_date "已获取clash配置文件" >> $LOG_FILE
+					echo_date "yaml文件合法性检查" >> $LOG_FILE	
+					check_yamlfile
+					if [ $flag == "1" ]; then
+					#后台执行上传文件名.yaml处理工作，包括去注释，去空白行，去除dns以上头部，将标准头部文件复制一份到/tmp/ 跟tmp的标准头部文件合并，生成新的head.yaml，再将head.yaml复制到/jffs/softcenter/merlinclash/并命名为upload.yaml
+						echo_date "后台执行yaml文件处理工作" >> $LOG_FILE
+						sh /jffs/softcenter/scripts/clash_yaml_sub.sh >/dev/null 2>&1 &
+					else
+						echo_date "yaml文件格式不合法" >> $LOG_FILE
+					fi
 				fi
 			else
-				echo_date "下载订阅文件失败，请稍后再试，退出" >> $LOG_FILE
+				failed_warning_clash
 			fi
 	fi
 
@@ -101,13 +107,22 @@ check_yamlfile(){
 	#para5=$(sed -n '/^type:/p' /tmp/upload.yaml)
 
 	if ([ ! -n "$para1" ] && [ ! -n "$para1_1" ]) && [ ! -n "$para2" ]; then
-		echo_date "获取的文件不是合法的yaml文件，请检查订阅连接是否有误" >> $LOG_FILE
+		echo_date "clash配置文件不是合法的yaml文件，转换格式可能有误" >> $LOG_FILE
 		rm -rf /tmp/$upname
 	else
-		echo_date "获取的文件检查通过" >> $LOG_FILE
+		echo_date "clash配置文件检查通过" >> $LOG_FILE
 		flag=1
 	fi
 }
+
+failed_warning_clash(){
+	rm -rf /tmp/$upname
+	echo_date "获取文件失败！！请检查网络！" >> $LOG_FILE
+	echo_date "===================================================================" >> $LOG_FILE
+	echo BBABBBBC
+	exit 1
+}
+
 set_lock(){
 	exec 233>"$LOCK_FILE"
 	flock -n 233 || {
@@ -125,7 +140,7 @@ case $1 in
 restart)
 	set_lock
 	echo "" > $LOG_FILE
-	echo_date "订阅链接处理" >> $LOG_FILE
+	echo_date "ACL4SSR订阅处理" >> $LOG_FILE
 	start_online_update >> $LOG_FILE
 	echo BBABBBBC >> $LOG_FILE
 	unset_lock

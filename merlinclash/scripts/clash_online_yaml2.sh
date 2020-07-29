@@ -59,8 +59,7 @@ get_oneline_rule_now(){
 		echo_date "使用常规网络下载,写入临时文件/tmp/clash_subscribe_file.txt..."
 		curl -4sSk --connect-timeout 8 $merlinclash_links2 > /tmp/clash_subscribe_file.txt
 
-		echo_date "节点信息下载完成，等待3秒后处理"
-		sleep 3s
+		sleep 1s
 		#虽然为0但是还是要检测下是否下载到正确的内容
 		echo_date "检查下载是否正确"
 		if [ "$?" == "0" ]; then
@@ -273,11 +272,12 @@ add_trojan_servers(){
 	echo_date "$num ：转换 trojan 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
-	yq w -i /tmp/proxies.yaml proxies[$num].type "trojan"
-	yq w -i /tmp/proxies.yaml proxies[$num].server $server
-	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
-	yq w -i /tmp/proxies.yaml proxies[$num].password $password
+	#yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
+	#yq w -i /tmp/proxies.yaml proxies[$num].type "trojan"
+	#yq w -i /tmp/proxies.yaml proxies[$num].server $server
+	#yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
+	#yq w -i /tmp/proxies.yaml proxies[$num].password $password
+	sed -i "\$i\ \ \- { name: "\"$remarks\"", type: trojan, server: "\"$server\"", port: "$server_port", password: "\"$password\"", sni: "\"$server\"" }" /tmp/proxies.yaml
 	let num++	
 }
 
@@ -297,14 +297,14 @@ add_v2ray_servers(){
 	echo_date "$num ：转换 v2ray 节点：$v2ray_ps"
 	#echo_date $num
 	#echo_date $num $v2ray_add
-	yq w -i /tmp/proxies.yaml proxies[$num].name "$v2ray_ps"
-	yq w -i /tmp/proxies.yaml proxies[$num].type "vmess"
-	yq w -i /tmp/proxies.yaml proxies[$num].server $v2ray_add
-	yq w -i /tmp/proxies.yaml proxies[$num].port $v2ray_port
-	yq w -i /tmp/proxies.yaml proxies[$num].uuid $v2ray_id
-	yq w -i /tmp/proxies.yaml proxies[$num].alterId $v2ray_aid
-	yq w -i /tmp/proxies.yaml proxies[$num].cipher "auto"
-
+	#yq w -i /tmp/proxies.yaml proxies[$num].name "$v2ray_ps"
+	#yq w -i /tmp/proxies.yaml proxies[$num].type "vmess"
+	#yq w -i /tmp/proxies.yaml proxies[$num].server $v2ray_add
+	#yq w -i /tmp/proxies.yaml proxies[$num].port $v2ray_port
+	#yq w -i /tmp/proxies.yaml proxies[$num].uuid $v2ray_id
+	#yq w -i /tmp/proxies.yaml proxies[$num].alterId $v2ray_aid
+	#yq w -i /tmp/proxies.yaml proxies[$num].cipher "auto"
+	sed -i "\$i\ \ \- { name: "\"$v2ray_ps\"", type: vmess, server: "\"$v2ray_add\"", port: "$v2ray_port", uuid: "\"$v2ray_id\"", alterId: "\"$v2ray_aid\"", cipher: "\"auto\"", tls: "$v2ray_tls", network: "\"$v2ray_net\"", ws-path: "\"$v2ray_path\"", ws-headers: {Host: "\"$v2ray_host\""}}" /tmp/proxies.yaml
 	let num++
 
 }
@@ -320,7 +320,7 @@ get_v2ray_remote_config(){
 	v2ray_net=$(echo "$decode_link" | jq -r .net)
 	v2ray_type=$(echo "$decode_link" | jq -r .type)
 	v2ray_tls_tmp=$(echo "$decode_link" | jq -r .tls)
-	[ "$v2ray_tls_tmp"x == "tls"x ] && v2ray_tls="tls" || v2ray_tls="none"
+	[ "$v2ray_tls_tmp"x == "tls"x ] && v2ray_tls="true" || v2ray_tls="false"
 	
 	if [ "$v2ray_v" == "2" ]; then
 		# "new format"
@@ -379,16 +379,17 @@ add_ssr_nodes(){
 	echo_date "$num ：转换 ssr 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
-	yq w -i /tmp/proxies.yaml proxies[$num].type "ssr"
-	yq w -i /tmp/proxies.yaml proxies[$num].server $server
-	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
-	yq w -i /tmp/proxies.yaml proxies[$num].cipher $encrypt_method
-	yq w -i /tmp/proxies.yaml proxies[$num].password $password
-	[ -n "$protocol" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocol $protocol
-	[ -n "$protoparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocolparam $protoparam
-	[ -n "$obfs" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfs $obfs
-	[ -n "$obfsparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfsparam $obfsparam
+	#yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
+	#yq w -i /tmp/proxies.yaml proxies[$num].type "ssr"
+	#yq w -i /tmp/proxies.yaml proxies[$num].server $server
+	#yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
+	#yq w -i /tmp/proxies.yaml proxies[$num].cipher $encrypt_method
+	#yq w -i /tmp/proxies.yaml proxies[$num].password $password
+	#[ -n "$protocol" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocol $protocol
+	#[ -n "$protoparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].protocolparam $protoparam
+	#[ -n "$obfs" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfs $obfs
+	#[ -n "$obfsparam" ] && yq w -i /tmp/proxies.yaml proxies[$num].obfsparam $obfsparam
+	sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ssr, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"", protocol: "\"$protocol\"", protocol-param: "\"$protoparam\"",protocolparam: "\"$protoparam\"", obfs: "\"$obfs\"", obfs-param: "\"$obfsparam\"", obfsparam: "\"$obfsparam\"" }" /tmp/proxies.yaml
 	let num++
 }
 get_ssr_node_info(){
@@ -402,11 +403,12 @@ get_ssr_node_info(){
 	#password=$(echo $password | base64_encode | sed 's/\s//g')
 	
 	obfsparam_temp=$(echo "$decode_link" | awk -F':' '{print $6}' | grep -Eo "obfsparam.+" | sed 's/obfsparam=//g' | awk -F'&' '{print $1}')
-	if [ -n "$obfsparam_temp" ]; then
-		obfsparam=$(decode_url_link $obfsparam_temp)
-	else
-		obfsparam="www.microsoft.com"
-	fi
+	[ -n "$obfsparam_temp" ] && obfsparam=$(decode_url_link $obfsparam_temp) || obfsparam=''
+	#if [ -n "$obfsparam_temp" ]; then
+	#	obfsparam=$(decode_url_link $obfsparam_temp)
+	#else
+	#	obfsparam="www.microsoft.com"
+	#fi
 	protoparam_temp=$(echo "$decode_link" | awk -F':' '{print $6}' | grep -Eo "protoparam.+" | sed 's/protoparam=//g' | awk -F'&' '{print $1}')
 	[ -n "$protoparam_temp" ] && protoparam=$(decode_url_link $protoparam_temp | sed 's/_compatible//g') || protoparam=''
 	
@@ -437,12 +439,17 @@ add_ss_servers(){
 	echo_date "$num ：转换 ss 节点：$remarks"
 	#echo_date $num
 	#echo_date $num $server
-	yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
-	yq w -i /tmp/proxies.yaml proxies[$num].type "ss"
-	yq w -i /tmp/proxies.yaml proxies[$num].server $server
-	yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
-	yq w -i /tmp/proxies.yaml proxies[$num].cipher $encrypt_method
-	yq w -i /tmp/proxies.yaml proxies[$num].password $password
+	#yq w -i /tmp/proxies.yaml proxies[$num].name "$remarks"
+	#yq w -i /tmp/proxies.yaml proxies[$num].type "ss"
+	#yq w -i /tmp/proxies.yaml proxies[$num].server $server
+	#yq w -i /tmp/proxies.yaml proxies[$num].port $server_port
+	#yq w -i /tmp/proxies.yaml proxies[$num].cipher $encrypt_method
+	#yq w -i /tmp/proxies.yaml proxies[$num].password $password
+	if [ "$obfs_tmp" == "tls" ]; then
+		sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ss, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"", plugin: "obfs", plugin-opts: {mode: "\"$obfs_tmp\"", host: "\"$obfs_host\""}, udp: true}" /tmp/proxies.yaml
+	else
+		sed -i "\$i\ \ \- { name: "\"$remarks\"", type: ss, server: "\"$server\"", port: "$server_port", password: "\"$password\"", cipher: "\"$encrypt_method\"" }" /tmp/proxies.yaml
+	fi
 	let num++
 }
 get_ss_config(){
@@ -484,13 +491,14 @@ get_ss_config(){
 }
 write_yaml(){
 	echo_date "开始写入节点名称"
-	test=$(echo $(yq r /tmp/proxies.yaml proxies[*].name))
+	#test=$(echo $(yq r /tmp/proxies.yaml proxies[*].name))
+	test=$(grep  "name" /tmp/proxies.yaml | awk -F","  '{print $1}' | awk -F "[\"\"]" '{print $2}')
 	for t in $test;
 	do 
 		str=$str,"\"$t"\"
 	done
 	proxy=$(echo $str |  awk '{print substr($1,2)}')
-	sleep 2s
+	sleep 1s
 	if [ "$merlinclash_localrulesel" == "常规规则" ]; then 		
 		sed -i "s/url-test, proxies,/url-test, proxies: [$proxy],/g" /tmp/proxy-group.yaml
 		sed -i "s/fallback, proxies,/fallback, proxies: [$proxy],/g" /tmp/proxy-group.yaml
@@ -569,7 +577,7 @@ case $1 in
 restart)
 	set_lock
 	echo "" > $LOG_FILE
-	echo_date "订阅链接处理" >> $LOG_FILE
+	echo_date "常规订阅处理" >> $LOG_FILE
 	get_oneline_rule_now >> $LOG_FILE
 
 	echo BBABBBBC >> $LOG_FILE

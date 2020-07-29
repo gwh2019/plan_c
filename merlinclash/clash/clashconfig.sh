@@ -7,7 +7,12 @@ LOCK_FILE=/var/lock/merlinclash.lock
 eval `dbus export merlinclash_`
 
 yamlname=$merlinclash_yamlsel
+#配置文件路径
 yamlpath=/jffs/softcenter/merlinclash/$yamlname.yaml
+#提取配置认证码
+secret=$(cat $yamlpath | awk '/secret:/{print $2}' | sed 's/"//g')
+#提取配置监听端口
+ecport=$(cat $yamlpath | awk -F: '/external-controller/{print $3}')
 chromecast_nu=""
 lan_ipaddr=$(nvram get lan_ipaddr)
 ssh_port=$(nvram get sshd_port)
@@ -36,8 +41,9 @@ move_config(){
 		#sh /jffs/softcenter/scripts/clash_yaml_sub.sh >/dev/null 2>&1 &
 		echo_date "执行yaml文件处理工作"
 		mkdir -p /tmp/yaml
+		rm -rf /tmp/yaml/*
 		cp -rf /tmp/$merlinclash_uploadfilename /tmp/yaml/$merlinclash_uploadfilename
-		sh /jffs/softcenter/scripts/clash_yaml_sub.sh
+		sh /jffs/softcenter/scripts/clash_yaml_upload_sub.sh
 	else
 		echo_date "没找到yaml文件"
 		rm -rf /tmp/*.yaml
@@ -67,10 +73,37 @@ watchdog(){
 		fi
 	fi
 }
+auto_setmark(){
+	if [ "$merlinclash_enable" == "1" ];then
+		if [ ! -z "$(pidof clash)" -a ! -z "$(netstat -anp | grep clash)" -a ! -n "$(grep "Parse config error" /tmp/clash_run.log)" ] ; then
+			/bin/sh /jffs/softcenter/scripts/clash_node_mark.sh setmark >/dev/null 2>&1 &
+			echo_date "开启自动获取节点信息" >> $LOG_FILE
+		else	
+			echo_date "clash进程故障，不开启自动获取节点信息" >> $LOG_FILE
+		fi
+	else
+		pid_setmark=$(ps | grep clash_node_mark.sh | grep -v grep | awk '{print $1}')
+		if [ -n "$pid_setmark" ]; then
+		echo_date 关闭节点状态获取进程...
+		# 有时候killall杀不了v2ray进程，所以用不同方式杀两次
+		kill -9 "$pid_setmark" >/dev/null 2>&1
+		fi
+	fi
+}
+
+kill_setmark(){
+	pid_setmark=$(ps | grep clash_node_mark.sh | grep -v grep | awk '{print $1}')
+	if [ -n "$pid_setmark" ]; then
+		echo_date 关闭节点状态获取进程...
+		# 有时候killall杀不了v2ray进程，所以用不同方式杀两次
+		kill -9 "$pid_setmark" >/dev/null 2>&1
+	fi
+}
 kill_process() {
 	clash_process=$(pidof clash)
 	pid_watchdog=$(ps | grep clash_watchdog.sh | grep -v grep | awk '{print $1}')
 	kcp_process=$(pidof client_linux)
+	pid_setmark=$(ps | grep clash_node_mark.sh | grep -v grep | awk '{print $1}')
 	if [ -n "$kcp_process" ]; then
 		echo_date 关闭kcp协议进程... >> $LOG_FILE
 		killall client_linux >/dev/null 2>&1
@@ -85,6 +118,11 @@ kill_process() {
 		echo_date 关闭看门狗进程...
 		# 有时候killall杀不了watchdog进程，所以用不同方式杀两次
 		kill -9 "$pid_watchdog" >/dev/null 2>&1
+	fi
+	if [ -n "$pid_setmark" ]; then
+		echo_date 关闭节点状态获取进程...
+		# 有时候killall杀不了v2ray进程，所以用不同方式杀两次
+		kill -9 "$pid_setmark" >/dev/null 2>&1
 	fi
 }
 kill_clash() {
@@ -114,8 +152,16 @@ flush_nat() {
 	iptables -t nat -D PREROUTING -p udp -m udp --dport 53 -j DNAT --to-destination $lan_ipaddr:23453 >/dev/null 2>&1
 	iptables -t nat -D PREROUTING -p tcp -j merlinclash
 	iptables -t nat -D PREROUTING -p tcp -i br0 -j merlinclash
-
-	
+	#20200725清除设备绕行，测试++
+	ipt_1=$(echo $lan_ipaddr | awk -F"." '{print $1}')
+	ipt_2=$(echo $lan_ipaddr | awk -F"." '{print $2}')
+	ipt_3=$ipt_1.$ipt_2
+	pass_indexs=$(iptables -nvL PREROUTING -t nat | sed 1,2d |  grep 'RETURN' | sed -n "/$ipt_3/=" | sort -r)
+	for pass_index in $pass_indexs; do
+		iptables -t nat -D PREROUTING $pass_index >/dev/null 2>&1
+		iptables -t mangle -D PREROUTING $pass_index >/dev/null 2>&1
+	done
+	#---------------------------
 	iptables -t nat -D clash_dns -p udp -j REDIRECT --to-ports 23453
 	iptables -t nat -D PREROUTING -p udp --dport 53 -j clash_dns
 	iptables -t nat -D OUTPUT -p udp --dport 53 -j clash_dns
@@ -191,6 +237,9 @@ check_rule() {
 	dbus remove merlinclash_acl_type
 	dbus remove merlinclash_acl_content
 	dbus remove merlinclash_acl_lianjie
+	#格式化文本,避免rules:规则 - 未对齐而报错 -20200727
+	sed -i '/rules:/,/port:/s/^[][ ]*- /  - /g' $yamlpath
+	
 }
 lan_bypass(){
 	# deivce_nu 获取已存数据序号
@@ -205,8 +254,10 @@ lan_bypass(){
 			name=$(eval echo \$merlinclash_device_name_$device)
 			echo_date "绕行设备名为【$name】,IP为【$ip】"
 			#写入绕行规则到iptables
-			iptables -t nat -I merlinclash -s $ip/32 -j RETURN
-  			iptables -t mangle -I merlinclash -s $ip/32 -j RETURN
+			#iptables -t nat -I merlinclash -s $ip/32 -j RETURN
+  			#iptables -t mangle -I merlinclash -s $ip/32 -j RETURN
+			iptables -t nat -I PREROUTING -s $ip/32 -j RETURN
+  			iptables -t mangle -I PREROUTING -s $ip/32 -j RETURN
 		done
 	else
 		echo_date "没有设置设备绕行" >> $LOG_FILE	
@@ -222,29 +273,40 @@ start_bind(){
 		echo_date "检查到已配置节点记忆，将对策略组进行处理" >> $LOG_FILE
 		#将/jffs/softcenter/merlinclash/$yamlname.yaml中的proxy-groups导出
 		#定位proxy-group:跟rules:行数
-		proxygroup_line=$(cat $yamlpath | grep -n "^proxy-groups:" | awk -F ":" '{print $1}')
-		rules_line=$(cat $yamlpath | grep -n "^rules:" | awk -F ":" '{print $1}')
-		let rules_line=$rules_line-1
-		sed -n "$proxygroup_line,$rules_line p" $yamlpath > /tmp/b.yaml
+		#proxygroup_line=$(cat $yamlpath | grep -n "^proxy-groups:" | awk -F ":" '{print $1}')
+		#rules_line=$(cat $yamlpath | grep -n "^rules:" | awk -F ":" '{print $1}')
+		#let rules_line=$rules_line-1
+		#sed -n "$proxygroup_line,$rules_line p" $yamlpath > /tmp/b.yaml
 		#删除原有
-		sed -i "$proxygroup_line,$rules_line d" $yamlpath
-		for pgnode in $pgnodes_nu; do
-			proxygroup=$(eval echo \$merlinclash_pgnodes_proxygroup_$pgnode)
-			nodesel=$(eval echo \$merlinclash_pgnodes_nodesel_$pgnode)
-			echo_date "proxygroup的值是$proxygroup" >> $LOG_FILE
-			echo_date "nodesel的值是$nodesel" >> $LOG_FILE
+		#sed -i "$proxygroup_line,$rules_line d" $yamlpath
+		#for pgnode in $pgnodes_nu; do
+		#	proxygroup=$(eval echo \$merlinclash_pgnodes_proxygroup_$pgnode)
+		#	nodesel=$(eval echo \$merlinclash_pgnodes_nodesel_$pgnode)
+		#	echo_date "proxygroup的值是$proxygroup" >> $LOG_FILE
+		#	echo_date "nodesel的值是$nodesel" >> $LOG_FILE
 			#对proxygroup值进行分割，取序号
-			order=$(echo $proxygroup | awk -F"." '{print $1}')
-			let order=order-1
+		#	order=$(echo $proxygroup | awk -F"." '{print $1}')
+		#	let order=order-1
 			#选中节点插到对应策略组最前
 			#  order proxygroup      nodesel
 			#比如12.聊天软件 --> [Trojan]台湾测试
 			#yq w -i $yamlpath proxy-groups[$order].proxies[+0] "$nodesel"
-			yq w -i /tmp/b.yaml proxy-groups[$order].proxies[+0] "$nodesel"
+		#	yq w -i /tmp/b.yaml proxy-groups[$order].proxies[+0] "$nodesel"
 			#再将b.yaml内容导回去$yamlpath
 			#插入换行符免得出错
-			sed -i '$a' $yamlpath
-			cat /tmp/b.yaml >> $yamlpath
+		#	sed -i '$a' $yamlpath
+		#	cat /tmp/b.yaml >> $yamlpath
+		for pgnode in $pgnodes_nu; do
+			proxygroup=$(eval echo \$merlinclash_encode_proxygroup_$pgnode)
+			nodesel=$(eval echo \$merlinclash_pgnodes_nodesel_$pgnode)
+			proxygroup=$(echo $proxygroup | awk -F"." '{print $2}')
+			echo_date "已配置策略组:$proxygroup"
+			echo_date "已指定节点:$nodesel"
+			#热更新配置
+			curl  -v \
+			#-H "Content-Type: application/json; charset=utf-8" \
+			-H "Authorization: Bearer $secret" \
+			-X PUT "http://$lan_ipaddr:$ecport/proxies/$proxygroup" -d "{\"name\":\"${nodesel}\"}" >/dev/null 2>&1 &
 		done
 	else
 		echo_date "未配置节点记忆" >> $LOG_FILE
@@ -252,6 +314,10 @@ start_bind(){
 	dbus remove merlinclash_pgnodes_proxygroup
 	dbus remove merlinclash_pgnodes_nodesel
 }
+start_remark(){
+	/bin/sh /jffs/softcenter/scripts/clash_node_mark.sh remark
+}
+
 start_kcp(){
 	# kcp_nu 获取已存数据序号
 
@@ -477,12 +543,12 @@ restart_dnsmasq() {
 }
 start_clash(){
 	echo_date "启用$yamlname YAML配置" >> $LOG_FILE
-	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>/tmp/clash_error.log &
+	#/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath >/dev/null 2>/tmp/clash_error.log &
+	/jffs/softcenter/bin/clash -d /jffs/softcenter/merlinclash/ -f $yamlpath 1>/tmp/clash_run.log  2>&1 &
 	#检查clash进程
-	sleep 1s
-	pid_clash=$(pidof clash)
-	if [ -n "$pid_clash" ]; then
-		echo_date "Clash 进程启动成功！(PID: $pid_clash)"
+	sleep 2s
+	if [ ! -z "$(pidof clash)" -a ! -z "$(netstat -anp | grep clash)" -a ! -n "$(grep "Parse config error" /tmp/clash_run.log)" ] ; then
+		echo_date "Clash 进程启动成功！(PID: $(pidof clash))"
 		#复制文件到/tmp/upload/，且重命名为view.yaml
 		rm -rf /tmp/upload/*.yaml
 		#cp -rf $yamlpath /tmp/view.txt 
@@ -495,6 +561,7 @@ start_clash(){
 		#加上行号
 		awk '$0=NR"."$0' /jffs/softcenter/merlinclash/proxygroups_tmp.txt > /jffs/softcenter/merlinclash/proxygroups.txt
 		#20200706读取当前配置proxies保存
+		yq r $list proxy-groups[*].name > /jffs/softcenter/merlinclash/proxies.txt
 		yq r $list proxies[*].name > /jffs/softcenter/merlinclash/proxies.txt
 		#往头部插入两个连接方式
 		sed -i "1i\REJECT" /jffs/softcenter/merlinclash/proxies.txt
@@ -508,8 +575,14 @@ start_clash(){
 	else
 		echo_date "Clash 进程启动失败！请检查配置文件是否存在问题，即将退出"
 		echo_date "失败原因："
-		b=$(cat /tmp/clash_error.log)
-		echo_date $b >> $LOG_FILE
+		error1=$(cat /tmp/clash_run.log | grep -oE "Parse config error.*")
+		if [ -n "$error1" ]; then
+    		echo_date $error1 >> $LOG_FILE
+		fi
+		error2=$(cat /tmp/clash_run.log | grep -oE "clashconfig.sh.*")
+		if [ -n "$error2" ]; then
+    		echo_date $error2 >> $LOG_FILE
+		fi
 		close_in_five
 	fi
 
@@ -574,7 +647,7 @@ rh)
 	cat /jffs/softcenter/merlinclash/yaml/redirhost.yaml >> $yamlpath
 	;;
 #rh)
-#	#redir-host方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 redirhost.yaml 合并
+	#redir-host方案，将/jffs/softcenter/merlinclash/上传文件名.yaml 跟 redirhost.yaml 合并
 #	echo_date "采用Redir-Host的DNS方案" >> $LOG_FILE
 
 #	cat /jffs/softcenter/merlinclash/yaml/redirhost.yaml >> $yamlpath
@@ -768,9 +841,7 @@ apply_mc() {
 	echo_date -------------------- 自定义规则检查区 开始-------------------------- >> $LOG_FILE
 	check_rule
 	echo_date -------------------- 自定义规则检查区 结束-------------------------- >> $LOG_FILE
-	echo_date ------------------------ 节点记忆检查区 开始---------------------- >> $LOG_FILE 
-	start_bind
-	echo_date ------------------------ 节点记忆检查区 结束---------------------- >> $LOG_FILE
+
 	# 清除iptables规则和ipset...
 	echo_date --------------------- 清除iptables规则 ------------------------ >> $LOG_FILE
 	flush_nat
@@ -780,7 +851,12 @@ apply_mc() {
 	start_bind
 	echo_date ---------------------- 启动插件相关功能 ------------------------ >> $LOG_FILE
 	start_clash && echo_date "start_clash" >> $LOG_FILE
-	watchdog
+	#echo_date ------------------------ 节点记忆检查区 开始---------------------- >> $LOG_FILE 
+	#start_bind
+	#echo_date ------------------------ 节点记忆检查区 结束---------------------- >> $LOG_FILE
+	echo_date ------------------------ 恢复记忆节点 开始---------------------- >> $LOG_FILE 
+	start_remark
+	echo_date ------------------------ 恢复记忆节点 结束---------------------- >> $LOG_FILE
 	load_nat
 	#----------------------------------KCP进程--------------------------------
 	echo_date ---------------------- KCP设置检查区 开始 ------------------------ >> $LOG_FILE
@@ -789,6 +865,8 @@ apply_mc() {
 	#----------------------------------应用节点记忆----------------------------
 	restart_dnsmasq
 	auto_start
+	watchdog
+	auto_setmark
     echo_date "" >> $LOG_FILE
 	echo_date "             ++++++++++++++++++++++++++++++++++++++++" >> $LOG_FILE
     echo_date "             +        管理面板：$lan_ipaddr:9990     +" >> $LOG_FILE
@@ -807,10 +885,15 @@ restart_mc_quickly(){
 	kill_clash
 	echo_date ---------------------- 启动插件相关功能 ------------------------ >> $LOG_FILE
 	start_clash && echo_date "start_clash" >> $LOG_FILE
+	echo_date ------------------------ 恢复记忆节点 开始---------------------- >> $LOG_FILE 
+	start_remark
+	echo_date ------------------------ 恢复记忆节点 结束---------------------- >> $LOG_FILE
 	restart_dnsmasq
 	#===load nat end===
 	# 创建开机/IPT重启任务！
 	auto_start
+	kill_setmark
+	auto_setmark
     echo_date "" >> $LOG_FILE
 	echo_date "             ++++++++++++++++++++++++++++++++++++++++" >> $LOG_FILE
     echo_date "             +        管理面板：$lan_ipaddr:9990     +" >> $LOG_FILE

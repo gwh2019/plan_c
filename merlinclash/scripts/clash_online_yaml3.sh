@@ -269,7 +269,7 @@ unset_lock(){
 	rm -rf "$LOCK_FILE"
 }
 
-case $1 in
+case $ACTION in
 restart)
 	set_lock
 	echo_date "飞机节点一键转换" > $LOG_FILE

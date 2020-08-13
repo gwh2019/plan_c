@@ -27,7 +27,7 @@ unset_lock(){
 	rm -rf "$LOCK_FILE"
 }
 
-case $1 in
+case $ACTION in
 start)
 	set_lock
 	echo "" > $LOG_FILE

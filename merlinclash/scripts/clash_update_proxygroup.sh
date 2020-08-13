@@ -244,7 +244,7 @@ move_proxygroup(){
 	echo_date "使用内置订阅时将使用新的规则文件... " >> $LOG_FILE
 }
 
-case $1 in
+case $ACTION in
 start)
 	echo "更新规则文件" > $LOG_FILE
 	echo_date "===================================================================" >> $LOG_FILE

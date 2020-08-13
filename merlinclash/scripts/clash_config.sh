@@ -5,7 +5,7 @@ eval `dbus export merlinclash_`
 
 echo "" > /tmp/merlinclash_log.txt
 
-case $1 in
+case $ACTION in
 start)
 	if [ "$merlinclash_enable" == "1" ];then
 		echo start >> /tmp/merlinclash_log.txt

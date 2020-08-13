@@ -80,7 +80,7 @@ close_in_five() {
 	sh /jffs/softcenter/merlinclash/clashconfig.sh stop
 }
 
-case $1 in
+case $ACTION in
 start)
 	echo "本地上传clash二进制替换" > $LOG_FILE
 	local_binary_replace >> $LOG_FILE

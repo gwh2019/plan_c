@@ -174,7 +174,7 @@ close_in_five() {
 }
 
 
-case $1 in
+case $ACTION in
 restart)
 	echo " " > $LOG_FILE
 	echo_date "===================================================================" >> $LOG_FILE

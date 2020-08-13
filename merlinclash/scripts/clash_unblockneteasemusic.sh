@@ -112,7 +112,7 @@ stop_unblockmusic(){
 	del_rule
 }
 
-case $1 in
+case $ACTION in
 start)
 	if [ "$merlinclash_unblockmusic_enable" == "1" ]; then
 		echo_date "开启网易云音乐解锁" >> $LOG_FILE

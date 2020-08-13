@@ -192,7 +192,7 @@ close_in_five() {
 	sh /jffs/softcenter/merlinclash/clashconfig.sh stop
 }
 
-case $1 in
+case $ACTION in
 start)
 	echo "" > $LOG_FILE
 	echo_date "获取远程服务器clash版本号" >> $LOG_FILE

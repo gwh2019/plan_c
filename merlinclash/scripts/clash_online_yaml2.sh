@@ -132,7 +132,6 @@ get_oneline_rule_now(){
 				NODE_NU0=$(cat /tmp/clash_subscribe_file_temp1.txt | grep -c "ss://")
 				echo_date "检测到ss节点格式，共计$NODE_NU0个节点..."
 				#urllinks为去掉ss://头的节点格式
-				#例子:YWVzLTEyOC1nY20jlueE1P@shcn21.qi.xyz:152/?plugin=obfs-local;obfs=tls;obfs-host=bebca9215.wns.windows.com&group=RGxlciBDbG91ZA#香港高级 CN1 01
 				urllinks=$(decode_url_link $(cat /tmp/clash_subscribe_file.txt) | grep -E "^ss://" | sed 's/ss:\/\///g')
 				#echo_date $urllinks
 				[ -z "$urllinks" ] && continue
@@ -141,14 +140,10 @@ get_oneline_rule_now(){
 				do
 					if [ -n "$(echo -n "$link" | grep "#")" ];then
 						#去掉ss://头部跟#后的标题
-						# new_sslink=YWVzLTEyOC1nY206VlhQaXBpMjlueE1P@shcn21.qiangdong.xyz:152/?plugin=obfs-local%3Bobfs%3Dtls%3Bobfs-host%3Dbebca9215.wns.windows.com&group=RGxlciBDbG91ZA
 						new_sslink=$(echo -n "$link" | awk -F'#' '{print $1}' | sed 's/ss:\/\///g')	
 						#echo_date "new_sslink=$new_sslink"
 						# 有些链接被 url 编码过，所以要先 url 解码
-						# link=ss://YWVzLTEyOC1nY206VlhQaXBpMjlueE1P@shcn21.qiangdong.xyz:152/?plugin=obfs-local;obfs=tls;obfs-host=bebca9215.wns.windows.com&group=RGxlciBDbG91ZA#香港高级 CN2 01
 						link=$(printf $(echo -n $link | sed 's/\\/\\\\/g;s/\(%\)\([0-9a-fA-F][0-9a-fA-F]\)/\\x\2/g'))
-						#echo_date "link=$link"
-						#new_sslink=YWVzLTEyOC1nY206VlhQaXBpMjlueE1P@shcn21.qiangdong.xyz:152/?plugin=obfs-local;obfs=tls;obfs-host=bebca9215.wns.windows.com&group=RGxlciBDbG91ZA
 						new_sslink=$(printf $(echo -n $new_sslink | sed 's/\\/\\\\/g;s/\(%\)\([0-9a-fA-F][0-9a-fA-F]\)/\\x\2/g'))
 						#echo_date "new_sslink=$new_sslink"
 						# 因为订阅的  里面有 \r\n ，所以需要先去除，否则就炸了，只能卸载重装,取出标题
